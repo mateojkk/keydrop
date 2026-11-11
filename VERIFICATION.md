@@ -7,6 +7,7 @@ This file records observed checks, separately from implementation scope.
 - `npm test`: three test groups, covering exact yoctoNEAR conversion, input precision/rejection, per-recipient funding overrides, duplicates, and account-ID syntax.
 - `npm run build`: TypeScript and optimized Vite production build.
 - `scripts/browser-qa.mjs`: headless Brave at 1440px desktop and 390px mobile; real image upload and compact WebP encoding, live preview, exact funding total, review dialog, duplicate rejection, recipient empty state, guide navigation, no horizontal mobile overflow, and no uncaught runtime errors.
+- Browser initialization of actual Wallet Selector modules: returned `network: testnet` and modules `meteor-wallet`, `my-near-wallet`. This checks module compatibility, not a wallet signature.
 - Screenshots and browser result are in `artifacts/`. They demonstrate UI behavior and contain test form data, **not on-chain execution evidence**.
 
 ## Not verified yet
