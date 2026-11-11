@@ -33,3 +33,7 @@ jobs:
         with:
           name: keydrop-contract
           path: contract/target/wasm32-unknown-unknown/release/keydrop.wasm
+      - uses: actions/upload-artifact@v4
+        with:
+          name: keydrop-cargo-lock
+          path: contract/Cargo.lock

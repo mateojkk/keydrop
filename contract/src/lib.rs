@@ -134,7 +134,9 @@ impl Contract {
         let window = (env::block_timestamp() - r.minted_at) / WEEK;
         if window != r.window { r.window = window; r.spent = 0; }
         require!(amount.0 > 0 && amount.0 <= r.balance, "Insufficient reward balance");
-        require!(amount.0 <= r.weekly_limit.saturating_sub(r.spent), "Weekly spending limit exceeded");
+        if amount.0 > r.weekly_limit.saturating_sub(r.spent) {
+            env::panic_str("Weekly spending limit exceeded");
+        }
         r.balance -= amount.0;
         r.spent += amount.0;
         r.pending = Some(PendingSpend { amount: amount.0, window });
