@@ -1,31 +1,32 @@
 # Verification status
 
-This file records observed checks, separately from implementation scope.
+## Source and build
 
-## Passed locally
+- Public repository: https://github.com/mateojkk/keydrop
+- [GitHub Actions run 43122049807](https://github.com/mateojkk/keydrop/actions/runs/43122049807) passed frontend checks, Rust native contract tests, and optimized WASM build. The release WASM was deployed to testnet; SHA-256: `CFF7271AB332E51562847B07CE8FA169099D88DDFF8D4C94B6F7C45F6A32B924` (469,531 bytes).
+- Local `npm test` passed all three input/amount test groups; `npm run build` passed TypeScript and Vite. Headless Brave initialized Wallet Selector on testnet with both `meteor-wallet` and `here-wallet` modules.
+- `scripts/browser-qa.mjs` passed desktop (1440px) and mobile (390px) flows: image upload and compact WebP, live preview, exact funding total, review dialog, duplicate rejection, empty recipient state, guide navigation, and no uncaught runtime errors or mobile overflow. UI screenshots and the result are in `artifacts/`.
 
-- `npm test`: three test groups, covering exact yoctoNEAR conversion, input precision/rejection, per-recipient funding overrides, duplicates, and account-ID syntax.
-- `npm run build`: TypeScript and optimized Vite production build.
-- `scripts/browser-qa.mjs`: headless Brave at 1440px desktop and 390px mobile; real image upload and compact WebP encoding, live preview, exact funding total, review dialog, duplicate rejection, recipient empty state, guide navigation, no horizontal mobile overflow, and no uncaught runtime errors.
-- Browser initialization of actual Wallet Selector modules: returned `network: testnet` and module `meteor-wallet`. This checks module compatibility, not a wallet signature.
-- Screenshots and browser result are in `artifacts/`. They demonstrate UI behavior and contain test form data, **not on-chain execution evidence**.
+## Real testnet transactions
 
-## Not verified yet
+Contract: [`keydrop-mateo.testnet`](https://testnet.nearblocks.io/address/keydrop-mateo.testnet). Project sender: `keydrop-project-mateo.testnet`. Each account below is a regular NEAR testnet account with its own signing key.
 
-- Rust contract compilation and native tests: the starting Windows environment had no Rust or C/C++ toolchain. Rustup installation was attempted, but toolchain downloads stalled. The test suite and GitHub Actions workflow are provided; a successful Cargo/CI run is required before using the contract with funds.
-- Real testnet deployment, wallet signatures, payouts, transfer-and-call receipts, wallet-gallery indexing, and empty deployment access-key list: require an actual deployed contract account and funded testnet wallets. No contract ID was supplied during implementation.
-- Public GitHub repository, public X demo post, and hackathon form submission have not been created. A private hosted frontend does not meet those submission requirements.
+| Step | Transaction | Observed final state |
+| --- | --- | --- |
+| Deploy and initialize | [3SQNDLWvcW8ECZriu9PydYgYnK5McqmZLzNVaidjw6qL](https://testnet.nearblocks.io/txns/3SQNDLWvcW8ECZriu9PydYgYnK5McqmZLzNVaidjw6qL) | NEP-171 metadata and zero initial supply returned. |
+| Airdrop two funded NFTs | [HHKbQTiwLqa3ZdUu5c8nkqZ6bWVKYVuPW9fdfqLtgJJH](https://testnet.nearblocks.io/txns/HHKbQTiwLqa3ZdUu5c8nkqZ6bWVKYVuPW9fdfqLtgJJH) | Token 0 to Alice, token 1 to Bob. Each had 1 NEAR reward balance and 0.4 NEAR weekly limit. Supply became 2. |
+| Alice spends 0.2 NEAR | [6uo7jYJ2XHLppPWmwGWondVzSYVuvBSuhzfsrwdtJ6TL](https://testnet.nearblocks.io/txns/6uo7jYJ2XHLppPWmwGWondVzSYVuvBSuhzfsrwdtJ6TL) | Payout callback returned success. Token 0 balance became 0.8; weekly available became 0.2. |
+| Alice requests 0.25 NEAR more | [BCCa1E49K3EA3pqdEda2d6VctKmvdEQNVGoJ9Z38wZAo](https://testnet.nearblocks.io/txns/BCCa1E49K3EA3pqdEda2d6VctKmvdEQNVGoJ9Z38wZAo) | Transaction failed in the contract; balance remained 0.8 and weekly available remained 0.2. The CLI reports the WASM trap as generic `unreachable`, so the on-chain state is the definitive check. |
+| Redeploy final code | [GJtnq85CfBoUKyvDj2RXwY4vpTFKghVwmJdc9pr6KLys](https://testnet.nearblocks.io/txns/GJtnq85CfBoUKyvDj2RXwY4vpTFKghVwmJdc9pr6KLys) | Preserved existing NFT state. Code hash `EzoyeDzFwdAu274y82C2ZLJHhTAx4BQB5igXrNcndEAw`. |
+| Alice transfers token 0 to Carol | [5mCiak1TCsYbrCidFqLws8eQR9Lsy6wzfayBAVsmeVLy](https://testnet.nearblocks.io/txns/5mCiak1TCsYbrCidFqLws8eQR9Lsy6wzfayBAVsmeVLy) | Carol owns token 0 with 0.8 NEAR remaining and 0.2 NEAR available this week. Carol has access; Alice has none. Bob still owns token 1 and has access. |
 
-## Dependency notes
+The final full-access deployment key was removed in [transaction 3G6GVhVMNDWEjrDhST6pVRZJLNt69EVfMdBda7PfpQ7E](https://testnet.nearblocks.io/txns/3G6GVhVMNDWEjrDhST6pVRZJLNt69EVfMdBda7PfpQ7E). A fresh final-state `view_access_key_list` RPC query returned an empty list, preventing code replacement by an account signer. The contract has no admin method that can change a token's funded balance or weekly limit. [README.md](README.md) includes commands for a fresh deployment and independently querying the public contract.
 
-The installed Meteor SDK depends on an older `query-string` / `decode-uri-component` chain with reported denial-of-service advisories. `npm audit` also reports low-severity upstream elliptic/secp256k1 issues. Nanoid is overridden to its patched 5.1.16 release. Do not force an incompatible major wallet-SDK downgrade to make the audit count disappear. Review updated wallet dependencies before a production/mainnet release. This project targets testnet.
+## Remaining submission steps
+
+- Wallet gallery indexing and an interactive wallet signature were not observed in browser automation. The on-chain transactions above were signed by ordinary account keys using NEAR CLI, and Wallet Selector module initialization was tested in browser.
+- The public X post with video or screenshots and the single hackathon form submission still require the project owner to publish. The private Sites preview is not the required public X demo post.
 
 ## Repeat browser QA
 
-The QA script accepts an installed Playwright module and Chromium browser. For example, after installing Playwright locally for development:
-
-```sh
-KEYDROP_BROWSER=/path/to/chromium node scripts/browser-qa.mjs
-```
-
-On PowerShell set `$env:KEYDROP_BROWSER` first. `KEYDROP_PLAYWRIGHT_MODULE` can point to an existing Playwright module using a `file:///` URL. The dev server must be running at `http://127.0.0.1:5173`, or set `KEYDROP_QA_URL` to the intended local preview URL.
+Run the Vite dev server at `http://127.0.0.1:5173`, then run `node scripts/browser-qa.mjs` with `KEYDROP_BROWSER` pointing to Chromium. `KEYDROP_PLAYWRIGHT_MODULE` may point to an existing Playwright module using a `file:///` URL. On PowerShell, set those as `$env:` variables before the command. `KEYDROP_QA_URL` can override the preview URL.
