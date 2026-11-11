@@ -16,9 +16,8 @@ export function selector() {
   return selectorPromise ??= Promise.all([
     import('@near-wallet-selector/core'),
     import('@near-wallet-selector/meteor-wallet'),
-    import('@near-wallet-selector/my-near-wallet'),
-  ]).then(([{setupWalletSelector},{setupMeteorWallet},{setupMyNearWallet}])=>
-    setupWalletSelector({network: 'testnet', modules: [setupMeteorWallet(), setupMyNearWallet()]}));
+  ]).then(([{setupWalletSelector},{setupMeteorWallet}])=>
+    setupWalletSelector({network: 'testnet', modules: [setupMeteorWallet()]}));
 }
 export async function connect() {
   if (!contractId) throw new Error('Deploy the contract and set VITE_CONTRACT_ID in .env to connect. See README for the exact steps.');

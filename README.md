@@ -9,7 +9,7 @@ Contributor Reward NFTs built for **NEAR HACKATHON 2026**, track **NFTs That Do 
 - Per-token balances and weekly limits. Seven-day windows are **anchored at mint**, not calendar weeks. Allowance does not roll over. The remaining balance caps every payment.
 - Holder-only native NEAR payments. Spending reserves balance and allowance before scheduling payment; failed payments restore both. A pending payment locks spending and transfers until its callback settles. Transfer-and-call also locks spending and transfers until resolution, including a rejected receiver call.
 - Transfers preserve balance, mint timestamp, and current-window spending. Access follows NFT ownership; a holder with multiple NFTs retains access until their last NFT leaves. A fully spent NFT still grants access.
-- React/TypeScript frontend with campaign metadata, artwork upload, per-recipient amounts, a funding review, Meteor/MyNearWallet testnet wallet selection, recipient balances, withdrawals, transfers, and an on-chain access check.
+- React/TypeScript frontend with campaign metadata, artwork upload, per-recipient amounts, a funding review, Meteor web/extension testnet wallet selection, recipient balances, withdrawals, transfers, and an on-chain access check.
 
 There are no balance/limit setters, clawbacks, admin withdrawals, or upgrade methods. **Deployment account keys must also be removed** to prevent replacing the contract code with an access key. This is a required deployment step, not something the frontend can enforce.
 
@@ -52,11 +52,10 @@ Tests cover batch balances, successful spending, rejected overspending, failed-p
 Install [near-cli-rs](https://github.com/near/near-cli-rs#installation) and create/import a funded **dedicated contract account** using its interactive prompts:
 
 ```sh
-near account create-account
-near account import-account
+near account create-account sponsor-by-faucet-service YOUR_CONTRACT.testnet autogenerate-new-keypair save-to-keychain network-config testnet create
 ```
 
-Create separate ordinary testnet accounts for the project, Alice, Bob, and Carol; fund the project account for rewards and gas. Import recipient accounts into Meteor or MyNearWallet with **testnet** selected. Testnet tokens have no real monetary value. The contract account needs its own initial balance for code/storage; 5 testnet NEAR is a practical starting balance.
+Create separate ordinary testnet accounts for the project, Alice, Bob, and Carol; fund the project account for rewards and gas. Import recipient accounts into Meteor with **testnet** selected. Testnet tokens have no real monetary value. The contract account needs its own initial balance for code/storage; 5 testnet NEAR is a practical starting balance.
 
 Replace `YOUR_CONTRACT.testnet` throughout. Deploy and initialize atomically to avoid an initialization race:
 
