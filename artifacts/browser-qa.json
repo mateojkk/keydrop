@@ -1,0 +1,14 @@
+{
+  "passed": true,
+  "checks": [
+    "artwork upload and WebP encoding",
+    "live preview",
+    "exact funding summary",
+    "review modal",
+    "duplicate validation",
+    "390px layout",
+    "recipient empty state",
+    "guide navigation",
+    "no runtime errors"
+  ]
+}
