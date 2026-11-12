@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {toYocto,fromYocto,makeRecipients,validAccount} from '../src/amounts.mjs';
 test('NEAR amounts round trip without floating point loss',()=>{
-  for(const v of ['0','1','0.000000000000000000000001','123456789.123456789123456789123456'])assert.equal(fromYocto(toYocto(v)),v);
+  for(const v of ['0','0.1','1','0.000000000000000000000001','123456789.123456789123456789123456'])assert.equal(fromYocto(toYocto(v)),v);
   for(const v of ['-1','1e3','Infinity','1.0000000000000000000000001','01',''])assert.throws(()=>toYocto(v));
 });
 test('recipient funding supports overrides and rejects duplicates',()=>{

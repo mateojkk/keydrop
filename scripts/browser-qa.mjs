@@ -91,6 +91,9 @@ try {
   await page.getByRole('textbox',{name:'Recipient 2 account'}).fill('alice.testnet');
   await page.getByRole('button',{name:'Review airdrop'}).click();
   await page.getByRole('status').filter({hasText:'Each recipient must be unique'}).waitFor();
+  await page.evaluate(()=>window.scrollTo(0,document.body.scrollHeight));
+  assert.equal(await page.getByRole('status').evaluate(node=>getComputedStyle(node).position),'fixed','Notifications must remain visible while scrolled');
+  assert.ok((await page.getByRole('status').boundingBox()).y<80,'Toast must appear near the top of the viewport');
   await page.getByRole('textbox',{name:'Recipient 2 account'}).fill('bob.testnet');
   await page.getByRole('button',{name:'Dismiss notification'}).click();
   mkdirSync('artifacts',{recursive:true});
@@ -116,7 +119,7 @@ try {
   await page.goto(new URL('/rewards',page.url()).href);
   await page.getByRole('heading',{name:'Connect your wallet'}).waitFor();
   assert.deepEqual(errors,[]);
-  writeFileSync('artifacts/browser-qa.json',JSON.stringify({passed:true,checks:['standalone landing page and CTAs','testnet wallet chooser','artwork upload, remove and re-upload','live preview','exact funding summary','review modal','duplicate validation','390px layout','recipient empty state','browser history and direct routes','no runtime errors']},null,2));
+  writeFileSync('artifacts/browser-qa.json',JSON.stringify({passed:true,checks:['standalone landing page and CTAs','testnet wallet chooser','artwork upload, remove and re-upload','live preview','exact funding summary','review modal','duplicate validation','fixed notification toast','390px layout','recipient empty state','browser history and direct routes','no runtime errors']},null,2));
   console.log('Browser QA passed. Screenshots and report: artifacts/');
 } catch(error) {
   console.error('Browser errors:',errors);
