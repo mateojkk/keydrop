@@ -16,7 +16,7 @@ Existing NFTs on [keydrop-mateo.testnet](https://testnet.nearblocks.io/address/k
 
 - Factory: [keydrop.testnet](https://testnet.nearblocks.io/address/keydrop.testnet)
 - Example collections: [Builder Collective](https://testnet.nearblocks.io/address/c0.keydrop.testnet), [Open Source Thank You](https://testnet.nearblocks.io/address/c1.keydrop.testnet), and [Shared Code Thanks](https://testnet.nearblocks.io/address/c2.keydrop.testnet)
-- Frontend: [Keydrop preview](https://keydrop-contributor-rewards.ripedulse1.chatgpt.site) (may require owner access)
+- Frontend: [Keydrop](https://keydrop-one.vercel.app/) (public testnet app)
 - Public source: [mateojkk/keydrop](https://github.com/mateojkk/keydrop)
 
 The factory's collection_count and list_collections views enumerate child contracts. The first two collections use locally deployed code; new ones use the immutable shared code. [VERIFICATION.md](VERIFICATION.md) records transactions and final states.
@@ -118,17 +118,6 @@ The child locks spending and transfers while a payment or transfer-call is in fl
 
 Import the public repository as one Vercel project with root directory . and Vite preset. vercel.json runs npm ci and npm run build, serves dist, and routes /api/status to a serverless function. Rust packages are built separately; Vercel deploys the frontend, not WASM. .env.production sets public factory and legacy contract IDs. Override VITE_CONTRACT_ID, VITE_LEGACY_CONTRACT_ID, or VITE_RPC_URL only when targeting another deployment. Never put secrets in VITE_ values. GET /api/status reports the factory's live collection count.
 
-## NEAR HACKATHON submission
+## Demo evidence
 
-One submission per project; it **cannot be edited after sending**. Submissions close **14 Nov 2026, 23:59 UTC** (**15 Nov, 00:59 WAT**). Track: **NFTs That Do Something** (nfts).
-
-- Keep this GitHub repository public.
-- Record video or screenshots using an NFT you already minted to your own account. Show its collection name, funded balance, a successful spend, the weekly-limit rejection, and the access check. One recipient is enough for this recording. For the two-recipient airdrop and transfer where access moves between accounts, use the public transactions and final on-chain reads in [VERIFICATION.md](VERIFICATION.md); you do not need to create another account or mint again just for the demo.
-- Publish a public X post saying it was built at **NEAR HACKATHON**, tag **@NEARProtocol** and **#NEARHackathon**, and attach the media.
-- Submit the public GitHub and X links at [nearhackathon.com](https://nearhackathon.com). Check both links in a signed-out browser before the single submission.
-
-Draft X copy (attach evidence before posting):
-
-> Built at NEAR HACKATHON: Keydrop lets projects create their own funded NFT collection and airdrop Contributor Rewards. Holders spend within on-chain weekly limits; remaining value and access transfer with the NFT. Testnet demo below. @NEARProtocol #NEARHackathon
-
-No X post or hackathon form submission is sent automatically by this repository.
+Use the [public app](https://keydrop-one.vercel.app/) to create a collection with one or more recipients and inspect rewards at `/rewards`. A single recipient is valid; the sender may use their own testnet account as that recipient. [VERIFICATION.md](VERIFICATION.md) links to completed testnet transactions for a two-recipient airdrop, a successful payout, a rejected payout above the weekly allowance, and an NFT transfer. Its recorded final on-chain reads show the remaining balance and access moving to the new holder.

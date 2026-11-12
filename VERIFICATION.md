@@ -41,10 +41,10 @@ Contract: [`keydrop-mateo.testnet`](https://testnet.nearblocks.io/address/keydro
 
 The final full-access deployment key was removed in [transaction 3G6GVhVMNDWEjrDhST6pVRZJLNt69EVfMdBda7PfpQ7E](https://testnet.nearblocks.io/txns/3G6GVhVMNDWEjrDhST6pVRZJLNt69EVfMdBda7PfpQ7E). A fresh final-state `view_access_key_list` RPC query returned an empty list, preventing code replacement by an account signer. The contract has no admin method that can change a token's funded balance or weekly limit. [README.md](README.md) includes commands for a fresh deployment and independently querying the public contract.
 
-## Remaining submission steps
+## Browser verification scope
 
 - Wallet gallery indexing and an interactive wallet signature were not observed in browser automation. The on-chain transactions above were signed by ordinary account keys using NEAR CLI, and Wallet Selector module initialization was tested in browser.
-- The public X post with video or screenshots and the single hackathon form submission still require the project owner to publish. The private Sites preview is not the required public X demo post.
+- The public frontend is [keydrop-one.vercel.app](https://keydrop-one.vercel.app/). The on-chain transactions above provide reproducible behavior beyond the browser automation.
 
 ## Repeat browser QA
 
