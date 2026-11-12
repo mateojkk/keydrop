@@ -23,7 +23,14 @@ try {
   await page.locator('.landing-actions').getByRole('link',{name:'Create an airdrop'}).click();
   assert.equal(new URL(page.url()).pathname,'/create');
   assert.equal(await page.locator('.sidebar').count(),1,'Workspace sidebar belongs on app routes');
-  await page.getByRole('heading',{name:/Reward the people/}).waitFor();
+  await page.getByRole('heading',{name:'Create airdrop',exact:true}).waitFor();
+  await page.getByRole('button',{name:'Connect wallet',exact:true}).click();
+  const walletDialog=page.getByRole('dialog',{name:'Connect a testnet wallet'});
+  await walletDialog.waitFor();
+  assert.equal(await walletDialog.getByRole('button',{name:/Meteor Wallet/}).count(),1);
+  assert.equal(await walletDialog.getByRole('button',{name:/MyNearWallet/}).count(),1);
+  assert.doesNotMatch(await walletDialog.innerText(),/HERE/i);
+  await walletDialog.getByRole('button',{name:'Close wallet chooser'}).click();
   await page.locator('#title').fill('Builder Collective');
   await assert.equal(await page.locator('.nft-content h3').innerText(),'Builder Collective');
   // Upload a real image via the application, including the embedded-WebP fallback.
@@ -61,7 +68,8 @@ try {
   await page.screenshot({path:'artifacts/create-mobile.png',fullPage:true});
   await page.getByRole('button',{name:'My rewards',exact:true}).click();
   assert.equal(new URL(page.url()).pathname,'/rewards');
-  await page.getByRole('heading',{name:'Your contributions have value.'}).waitFor();
+  await page.getByRole('heading',{name:'Connect your wallet'}).waitFor();
+  assert.equal(await page.locator('.topbar').getByRole('button',{name:'Connect wallet'}).count(),0);
   await page.locator('.sidebar .brand').click();
   assert.equal(new URL(page.url()).pathname,'/');
   assert.equal(await page.locator('.sidebar').count(),0);
@@ -71,11 +79,11 @@ try {
   await page.goForward();
   assert.equal(new URL(page.url()).pathname,'/');
   await page.goto(new URL('/create',page.url()).href);
-  await page.getByRole('heading',{name:/Reward the people/}).waitFor();
+  await page.getByRole('heading',{name:'Create airdrop',exact:true}).waitFor();
   await page.goto(new URL('/rewards',page.url()).href);
-  await page.getByRole('heading',{name:'Your contributions have value.'}).waitFor();
+  await page.getByRole('heading',{name:'Connect your wallet'}).waitFor();
   assert.deepEqual(errors,[]);
-  writeFileSync('artifacts/browser-qa.json',JSON.stringify({passed:true,checks:['standalone landing page and CTAs','artwork upload and WebP encoding','live preview','exact funding summary','review modal','duplicate validation','390px layout','recipient empty state','browser history and direct routes','no runtime errors']},null,2));
+  writeFileSync('artifacts/browser-qa.json',JSON.stringify({passed:true,checks:['standalone landing page and CTAs','testnet wallet chooser','artwork upload and WebP encoding','live preview','exact funding summary','review modal','duplicate validation','390px layout','recipient empty state','browser history and direct routes','no runtime errors']},null,2));
   console.log('Browser QA passed. Screenshots and report: artifacts/');
 } catch(error) {
   console.error('Browser errors:',errors);

@@ -4,8 +4,8 @@
 
 - Public repository: https://github.com/mateojkk/keydrop
 - [GitHub Actions run 43122049807](https://github.com/mateojkk/keydrop/actions/runs/43122049807) passed frontend checks, Rust native contract tests, and optimized WASM build. The release WASM was deployed to testnet; SHA-256: `CFF7271AB332E51562847B07CE8FA169099D88DDFF8D4C94B6F7C45F6A32B924` (469,531 bytes).
-- Local `npm test` passed all three input/amount test groups; `npm run build` passed TypeScript and Vite. Headless Brave initialized Wallet Selector on testnet with both `meteor-wallet` and `here-wallet` modules.
-- `scripts/browser-qa.mjs` passed desktop (1440px) and mobile (390px) flows: standalone landing page without the workspace sidebar, direct `/create` and `/rewards` routes, browser back/forward, image upload and compact WebP, live preview, exact funding total, review dialog, duplicate rejection, empty recipient state, and no uncaught runtime errors or mobile overflow. UI screenshots and the result are in `artifacts/`.
+- Local `npm test` passed all three input/amount test groups; `npm run build` passed TypeScript and Vite. Headless Brave initialized Wallet Selector on testnet with `meteor-wallet` and `my-near-wallet`, opened the custom chooser, and confirmed that MyNearWallet opens `https://testnet.mynearwallet.com/login/` for `keydrop-mateo.testnet`.
+- `scripts/browser-qa.mjs` passed desktop (1440px) and mobile (390px) flows: standalone landing page, direct `/create` and `/rewards` routes, browser back/forward, the Meteor/MyNearWallet chooser, image upload and compact WebP, live preview, exact funding total, review dialog, duplicate rejection, empty recipient state, and no uncaught runtime errors or mobile overflow. On mobile, the form appears before the preview. UI screenshots and the result are in `artifacts/`.
 
 ## Real testnet transactions
 

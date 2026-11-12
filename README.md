@@ -9,7 +9,7 @@ Contributor Reward NFTs built for **NEAR HACKATHON 2026**, track **NFTs That Do 
 - Per-token balances and weekly limits. Seven-day windows are **anchored at mint**, not calendar weeks. Allowance does not roll over. The remaining balance caps every payment.
 - Holder-only native NEAR payments. Spending reserves balance and allowance before scheduling payment; failed payments restore both. A pending payment locks spending and transfers until its callback settles. Transfer-and-call also locks spending and transfers until resolution, including a rejected receiver call.
 - Transfers preserve balance, mint timestamp, and current-window spending. Access follows NFT ownership; a holder with multiple NFTs retains access until their last NFT leaves. A fully spent NFT still grants access.
-- React/TypeScript frontend with campaign metadata, artwork upload, per-recipient amounts, a funding review, Meteor and HERE testnet wallet selection, recipient balances, withdrawals, transfers, and an on-chain access check.
+- React/TypeScript frontend with campaign metadata, artwork upload, per-recipient amounts, a funding review, Meteor and MyNearWallet testnet wallet selection, recipient balances, withdrawals, transfers, and an on-chain access check.
 
 There are no balance/limit setters, clawbacks, admin withdrawals, or upgrade methods. The live deployment account's keys were removed after verification, so its code cannot be replaced by a signed deployment transaction.
 
@@ -38,6 +38,8 @@ npm run dev
 ```
 
 Open the Local URL printed by Vite. You can edit and preview a campaign without a wallet. Transactions require `VITE_CONTRACT_ID` to point to this deployed contract. No fake wallet connection or simulated mint success is used.
+
+**Connect wallet** offers Meteor and MyNearWallet on testnet. Use Meteor with its network set to testnet, or use [MyNearWallet's testnet site](https://testnet.mynearwallet.com/). Connect the project account to airdrop and a recipient account to view or spend its NFT. Browser-wallet transactions may redirect and return without an immediate result; Keydrop checks the transaction hash after the wallet returns.
 
 The site opens on a standalone **How it works** landing page at `/`, outside the wallet workspace. **Create airdrop** is `/create`, and **My rewards** is `/rewards`; only these app routes show the workspace sidebar. Navigation updates the URL and supports direct links, refresh, and browser back/forward. The Vercel SPA rewrite in `vercel.json` serves these routes from the same frontend build.
 

@@ -1,0 +1,20 @@
+.sidebar nav{margin-top:48px}
+.sidebar-bottom{padding-top:0}
+.main-shell main{padding-top:31px}
+.page-heading.workspace-heading{margin-bottom:22px;align-items:flex-start}
+.workspace-heading h1{font-size:26px;line-height:1.2;letter-spacing:-.7px;margin:0 0 8px}
+.workspace-heading p{font-size:11px;line-height:1.6}
+.preview-label{font-size:11px;letter-spacing:0;font-weight:600;color:#42563f}
+.wallet-dialog{width:min(440px,100%)}
+.wallet-dialog h2{margin:2px 28px 9px 0}
+.wallet-options{display:grid;gap:10px;margin:24px 0 18px}
+.wallet-options>button{display:flex;align-items:center;gap:13px;width:100%;border:1px solid #dce5d2;border-radius:9px;background:#fbfdf8;text-align:left;padding:15px;color:#47613c}
+.wallet-options>button:hover:not(:disabled){border-color:#91ae78;background:#f0f6e8}
+.wallet-options>button>span{flex:1;min-width:0}
+.wallet-options strong,.wallet-options small{display:block}
+.wallet-options strong{font-size:12px;color:#283b2e}
+.wallet-options small{margin-top:4px;font-size:9px}
+.wallet-dialog .wallet-progress{color:#5f794d}
+.wallet-dialog .wallet-help{border-top:1px solid #e2e9d9;padding-top:15px;margin-top:10px}
+.wallet-help a{display:inline-flex;align-items:center;gap:2px;color:#4c7545;text-decoration:underline;text-underline-offset:3px}
+@media(max-width:700px){.sidebar nav{margin-top:0}.main-shell main{padding-top:24px}.workspace-heading h1{font-size:23px}.preview-column{grid-row:auto}}

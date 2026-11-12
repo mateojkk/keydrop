@@ -1,5 +1,4 @@
 import type { WalletSelector } from '@near-wallet-selector/core';
-import '@near-wallet-selector/modal-ui/styles.css';
 
 export const contractId: string = import.meta.env.VITE_CONTRACT_ID || '';
 const rpc = import.meta.env.VITE_RPC_URL || 'https://test.rpc.fastnear.com';
@@ -16,15 +15,9 @@ export function selector() {
   return selectorPromise ??= Promise.all([
     import('@near-wallet-selector/core'),
     import('@near-wallet-selector/meteor-wallet'),
-    import('@near-wallet-selector/here-wallet'),
-  ]).then(([{setupWalletSelector},{setupMeteorWallet},{setupHereWallet}])=>
-    setupWalletSelector({network: 'testnet', modules: [setupMeteorWallet(), setupHereWallet()]}));
-}
-export async function connect() {
-  if (!contractId) throw new Error('Deploy the contract and set VITE_CONTRACT_ID in .env to connect. See README for the exact steps.');
-  const s = await selector();
-  const { setupModal } = await import('@near-wallet-selector/modal-ui');
-  setupModal(s, {contractId}).show();
+    import('@near-wallet-selector/my-near-wallet'),
+  ]).then(([{setupWalletSelector},{setupMeteorWallet},{setupMyNearWallet}])=>
+    setupWalletSelector({network: 'testnet', modules: [setupMeteorWallet(), setupMyNearWallet()]})).catch(error=>{selectorPromise=undefined;throw error;});
 }
 export async function view<T>(method: string, args: object): Promise<T> {
   if (!contractId) throw new Error('No testnet contract configured yet. Follow the deployment steps in README.');
