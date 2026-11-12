@@ -83,7 +83,7 @@ impl Factory {
             .create_account()
             .transfer(NearToken::from_yoctonear(self.child_seed()))
             .deploy_contract(CHILD_CODE.to_vec())
-            .function_call("new".into(), init_args, NearToken::from_yoctonear(child_deposit), Gas::from_tgas(140))
+            .function_call("new", init_args, NearToken::from_yoctonear(child_deposit), Gas::from_tgas(140))
             .then(Self::ext(env::current_account_id()).with_static_gas(Gas::from_tgas(25))
                 .on_created(child_id, collection_name, creator_id, U128(registry_budget)))
     }

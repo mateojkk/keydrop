@@ -32,6 +32,7 @@ try {
   assert.doesNotMatch(await walletDialog.innerText(),/HERE/i);
   await walletDialog.getByRole('button',{name:'Close wallet chooser'}).click();
   await page.locator('#title').fill('Builder Collective');
+  await page.locator('#collection-name').fill('Builder Collective Collection');
   await assert.equal(await page.locator('.nft-content h3').innerText(),'Builder Collective');
   // Upload a real image via the application, including the embedded-WebP fallback.
   const image=await page.evaluate(()=>{
@@ -47,13 +48,15 @@ try {
   await page.getByRole('textbox',{name:'Recipient 1 account'}).fill('alice.testnet');
   await page.getByRole('textbox',{name:'Recipient 2 account'}).fill('bob.testnet');
   await page.getByRole('textbox',{name:'Recipient 2 reward'}).fill('15');
-  assert.match(await page.locator('.summary-total').innerText(),/25.24/);
+  await page.locator('.summary-total strong').getByText(/\d+\.\d+ NEAR/).waitFor();
+  const quotedTotal=Number.parseFloat(await page.locator('.summary-total strong').innerText());
+  assert.ok(quotedTotal>25,'Collection deployment must be included in the total');
   await page.getByRole('button',{name:'Review airdrop'}).click();
   const dialog=page.getByRole('dialog');await dialog.waitFor();
   assert.match(await dialog.innerText(),/alice.testnet/);
   assert.match(await dialog.innerText(),/bob.testnet/);
-  assert.match(await dialog.innerText(),/25.24 NEAR/);
-  assert.match(await dialog.innerText(),/Keydrop Contributor Rewards/);
+  assert.match(await dialog.innerText(),new RegExp(quotedTotal.toString().replace('.','\\.')+' NEAR'));
+  assert.match(await dialog.innerText(),/Builder Collective Collection/);
   assert.match(await dialog.innerText(),/Embedded artwork may be blank/);
   await page.getByRole('button',{name:'Close review'}).click();
   // Duplicate recipients must fail before any wallet request.

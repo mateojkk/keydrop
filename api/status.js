@@ -1,4 +1,4 @@
-const contractId = process.env.NEAR_CONTRACT_ID || 'keydrop-mateo.testnet';
+const contractId = process.env.NEAR_CONTRACT_ID || 'keydrop.testnet';
 const rpcUrl = process.env.NEAR_RPC_URL || 'https://test.rpc.fastnear.com';
 
 export default async function handler(request, response) {
@@ -20,7 +20,7 @@ export default async function handler(request, response) {
           request_type: 'call_function',
           finality: 'final',
           account_id: contractId,
-          method_name: 'nft_total_supply',
+          method_name: 'collection_count',
           args_base64: 'e30=',
         },
       }),
@@ -31,8 +31,8 @@ export default async function handler(request, response) {
     if (result.error || result.result?.error || !Array.isArray(result.result?.result)) {
       throw new Error('Contract query failed');
     }
-    const totalSupply = JSON.parse(Buffer.from(result.result.result).toString('utf8'));
-    return response.status(200).json({ ok: true, network: 'testnet', contractId, totalSupply });
+    const collectionCount = JSON.parse(Buffer.from(result.result.result).toString('utf8'));
+    return response.status(200).json({ ok: true, network: 'testnet', contractId, collectionCount });
   } catch {
     return response.status(503).json({ ok: false, network: 'testnet', contractId, error: 'Testnet contract status unavailable' });
   }
