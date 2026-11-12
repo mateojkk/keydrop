@@ -12,6 +12,7 @@ import { encodeArtwork } from './artwork';
 import { confirmedPayout } from './payout.mjs';
 import { canSpend, assertSpendable } from './reward-spend.mjs';
 import { claimHistoryKey, readClaimHistory, rememberClaim } from './claim-history.mjs';
+import { fetchClaimHistoryPage, mergeClaimHistory } from './chain-history.mjs';
 import { DocsPage } from './docs';
 import { campaignSignature, mintRecordKey, findMint, saveMint, clearPendingMint } from './mint-guard.mjs';
 
@@ -82,6 +83,10 @@ function App() {
   const [success,setSuccess] = useState<string[]>([]);
   const [latestPayout,setLatestPayout] = useState<Payout|null>(null);
   const [claims,setClaims] = useState<Claim[]>([]);
+  const [chainClaims,setChainClaims] = useState<Claim[]>([]);
+  const [historyCursor,setHistoryCursor] = useState('');
+  const [historyLoading,setHistoryLoading] = useState(false);
+  const [historyError,setHistoryError] = useState('');
   const [nfts,setNfts] = useState<(NFT & { reward: Reward })[]>([]);
   const [loading,setLoading] = useState(false);
   const [hasAccess,setHasAccess] = useState<boolean|null>(null);
@@ -116,6 +121,24 @@ function App() {
       setClaims(history);
     } catch {setLatestPayout(null);setClaims([]);}
   },[account]);
+  useEffect(()=>{
+    if(!account||page!=='rewards'){setChainClaims([]);setHistoryCursor('');setHistoryError('');return;}
+    let cancelled=false;
+    setChainClaims([]);setHistoryCursor('');setHistoryError('');setHistoryLoading(true);
+    (async()=>{
+      try{
+        let next='';const found:Claim[]=[];
+        for(let page=0;page<3;page++){
+          const result=await fetchClaimHistoryPage(account,contractId,legacyContractId,next);
+          found.push(...result.claims);next=result.next;
+          if(!next||found.length>=10)break;
+        }
+        if(!cancelled){setChainClaims(found);setHistoryCursor(next);}
+      }catch(e){if(!cancelled)setHistoryError(errorText(e));}
+      finally{if(!cancelled)setHistoryLoading(false);}
+    })();
+    return()=>{cancelled=true;};
+  },[account,page]);
   useEffect(() => {
     if (!contractId || !inApp) return;
     let unsubscribe: (()=>void)|undefined;
@@ -181,6 +204,16 @@ function App() {
       localStorage.setItem(`keydrop:payout:${contractId}:${payout.senderId}`,JSON.stringify(payout));
       rememberClaim(localStorage,claimHistoryKey(contractId,payout.senderId),payout,rewardContractId,recordedAt);
     } catch { /* confirmation still appears in this tab */ }
+  }
+  async function loadMoreClaims(){
+    if(!account||!historyCursor||historyLoading)return;
+    setHistoryLoading(true);setHistoryError('');
+    try{
+      const result=await fetchClaimHistoryPage(account,contractId,legacyContractId,historyCursor);
+      setChainClaims(current=>mergeClaimHistory([...current,...result.claims],[]) as Claim[]);
+      setHistoryCursor(result.next);
+    }catch(e){setHistoryError(errorText(e));}
+    finally{setHistoryLoading(false);}
   }
   function validate() {
     if (!collectionName.trim() || new TextEncoder().encode(collectionName).length>120) throw new Error('Add a collection name (up to 120 bytes).');
@@ -302,6 +335,7 @@ function App() {
     finally{setWalletConnecting(null);}
   }
   const displayMedia=media ? (media.startsWith('ipfs://')?media.replace('ipfs://','https://ipfs.io/ipfs/'):media) : localImage;
+  const visibleClaims=mergeClaimHistory(chainClaims,claims) as Claim[];
   const mediaFailed=!!displayMedia && failedMedia===displayMedia;
   const mediaLoadFailed=()=>setFailedMedia(displayMedia);
 
@@ -331,7 +365,14 @@ function App() {
         {success.length>0&&<div className="success-box"><CheckCircle2 size={23}/><div><h3>Confirmed on NEAR testnet</h3><p>View the transaction to inspect minted tokens and recipients.</p>{success.map(hash=><a key={hash} href={`https://testnet.nearblocks.io/txns/${hash}`} target="_blank" rel="noreferrer">View transaction<ExternalLink size={14}/></a>)}</div></div>}
       </>}
       {page==='rewards'&&<><div className="page-heading workspace-heading"><div><h1>My rewards</h1><p>View balances, spend, and transfer reward NFTs.</p></div></div>{!account?<div className="empty-state"><Gift size={40}/><h2>Connect your wallet</h2><p>Use the NEAR account that received a reward NFT.</p><button className="primary-button" onClick={connectWallet}><Wallet size={17}/>Connect testnet wallet</button></div>:<><div className="access-strip"><ShieldCheck size={22}/><div><strong>{hasAccess===null?'Checking on-chain access…':hasAccess?'Access verified':'No contributor access'}</strong><p>{account} · {nfts.length} Keydrop NFT{nfts.length===1?"":"s"}</p></div><button className="secondary-button" disabled={loading||busy} onClick={loadRewards}>{loading?<LoaderCircle className="spin" size={15}/>:<Check size={15}/>}Refresh from chain</button></div>{latestPayout&&latestPayout.senderId===account&&<div className="payout-confirmation" role="status"><div><small>Latest NFT payment</small><strong>{latestPayout.receiverId===account?"+":""}{money(latestPayout.amount)} NEAR</strong><p>{latestPayout.receiverId===account?"Received in your wallet":'Sent to '+latestPayout.receiverId} from NFT #{latestPayout.tokenId}</p></div><a href={"https://testnet.nearblocks.io/txns/"+latestPayout.txHash} target="_blank" rel="noreferrer">View on-chain payment <ExternalLink size={14}/></a></div>}{loading?<div className="empty-state"><LoaderCircle className="spin"/>Reading your rewards from testnet…</div>:nfts.length===0?<div className="empty-state"><Gift size={40}/><h2>No rewards here yet.</h2><p>When a project airdrops you a Keydrop NFT, it will appear here.</p></div>:<div className="rewards-grid">{nfts.map(nft=><section className="panel recipient-nft" key={nft.contract_id+':'+nft.token_id}>{nft.metadata?.media?<img className="recipient-art" alt={nft.metadata.title||'Reward NFT'} src={nft.metadata.media.replace('ipfs://','https://ipfs.io/ipfs/')}/>:<RewardArt small/>}<div className="nft-collection">{nft.collection_name} / TOKEN #{nft.token_id}<ShieldCheck size={14}/></div><h2>{nft.metadata?.title||'Contributor Reward'}</h2><p>{nft.metadata?.description}</p><div className="balance-grid"><div><small>Remaining balance</small><strong>{money(nft.reward.balance)} NEAR</strong></div><div><small>Available this week</small><strong>{money(nft.reward.available)} NEAR</strong></div></div><small>Weekly limit: {money(nft.reward.weekly_limit)} NEAR · Resets {new Date(Number(nft.reward.resets_at)).toLocaleString()}</small>{nft.reward.pending&&<p className="pending-note">A transaction is settling. Refresh in a moment.</p>}<label htmlFor={`spend-${nft.token_id}`}>Send NEAR from this NFT</label><div className="inline-form"><input id={`spend-${nft.token_id}`} inputMode="decimal" disabled={!canSpend(nft.reward)} placeholder="Amount in NEAR" value={spendAmounts[nft.contract_id+":"+nft.token_id]||''} onChange={e=>setSpendAmounts({...spendAmounts,[nft.contract_id+":"+nft.token_id]:e.target.value})}/><button className="secondary-button" disabled={busy||!canSpend(nft.reward)} onClick={()=>void spendReward(nft.token_id,nft.contract_id)}><ArrowDownToLine size={16}/>{nft.reward.pending?"Settling":BigInt(nft.reward.balance)===0n?"Spent":canSpend(nft.reward)?"Send":"Limit reached"}</button></div><input className="payout-account" aria-label={`Payment recipient for token ${nft.token_id}`} placeholder={`Recipient account (defaults to ${account})`} value={payoutAccounts[nft.contract_id+":"+nft.token_id]||''} onChange={e=>setPayoutAccounts({...payoutAccounts,[nft.contract_id+":"+nft.token_id]:e.target.value})}/><small>Leave recipient blank to pay your connected wallet. Up to {money(nft.reward.available)} NEAR is available now; excess requests fail on-chain.</small><details><summary>Transfer reward NFT <ArrowUpRight size={14}/></summary><p>Its remaining balance, current allowance and access move to the new holder.</p><div className="inline-form"><input aria-label={`New holder for token ${nft.token_id}`} placeholder="New holder.testnet" value={destinations[nft.contract_id+":"+nft.token_id]||''} onChange={e=>setDestinations({...destinations,[nft.contract_id+":"+nft.token_id]:e.target.value})}/><button className="secondary-button" disabled={busy||nft.reward.pending} onClick={()=>{const receiver=destinations[nft.contract_id+":"+nft.token_id]?.trim();if(!receiver||!validAccount(receiver)||receiver===account){setNotice('Enter a valid different NEAR account ID.');return;}if(window.confirm(`Transfer NFT #${nft.token_id} and its ${money(nft.reward.balance)} NEAR remaining balance to ${receiver}? This cannot be undone.`))void transact('nft_transfer',{token_id:nft.token_id,receiver_id:receiver,memo:'Keydrop reward transfer'},nft.contract_id);}}>Transfer</button></div></details></section>)}</div>}</>}</>}
-      {page==='rewards'&&account&&<section className="panel claim-history"><div className="claim-history-heading"><h2>Claim history</h2><span>{claims.length} confirmed payment{claims.length===1?'':'s'}</span></div>{claims.length===0?<p className="claim-history-empty">No confirmed payments saved here yet.</p>:<div className="claim-history-list">{claims.map(claim=><div className="claim-history-row" key={claim.txHash}><div><strong>{claim.receiverId===account?'+':'−'}{money(claim.amount)} NEAR</strong><span>{claim.receiverId===account?'Received in your wallet':`Sent to ${claim.receiverId}`} · NFT #{claim.tokenId}{claim.rewardContractId?` · ${claim.rewardContractId}`:''}</span><small>{claim.recordedAt?new Date(claim.recordedAt).toLocaleString():'Previously confirmed'}</small></div><a href={`https://testnet.nearblocks.io/txns/${claim.txHash}`} target="_blank" rel="noreferrer" aria-label={`View claim transaction ${claim.txHash}`}><ExternalLink size={16}/></a></div>)}</div>}<p className="claim-history-note">This browser saves confirmed payments it sees. For older claims or other devices, <a href={`https://testnet.nearblocks.io/address/${account}`} target="_blank" rel="noreferrer">view your on-chain activity <ExternalLink size={12}/></a>.</p></section>}
+      {page==='rewards'&&account&&<section className="panel claim-history">
+        <div className="claim-history-heading"><h2>Claim history</h2><span>{visibleClaims.length} confirmed payment{visibleClaims.length===1?'':'s'}</span></div>
+        {historyLoading&&<p className="claim-history-empty">Loading on-chain claims…</p>}
+        {visibleClaims.length===0?(!historyLoading&&<p className="claim-history-empty">No confirmed claims found.</p>):<div className="claim-history-list">{visibleClaims.map(claim=><div className="claim-history-row" key={claim.txHash}><div><strong>{claim.receiverId===account?'+':'−'}{money(claim.amount)} NEAR</strong><span>{claim.receiverId===account?'Received in your wallet':`Sent to ${claim.receiverId}`} · NFT #{claim.tokenId}{claim.rewardContractId?` · ${claim.rewardContractId}`:''}</span><small>{claim.recordedAt?new Date(claim.recordedAt).toLocaleString():'Previously confirmed'}</small></div><a href={`https://testnet.nearblocks.io/txns/${claim.txHash}`} target="_blank" rel="noreferrer" aria-label={`View claim transaction ${claim.txHash}`}><ExternalLink size={16}/></a></div>)}</div>}
+        {historyError&&<p className="claim-history-error">{historyError}</p>}
+        {historyCursor&&<button className="secondary-button claim-history-more" disabled={historyLoading} onClick={()=>void loadMoreClaims()}>{historyLoading?'Loading…':'Load older claims'}</button>}
+        <p className="claim-history-note">Verified payments on NEAR testnet. History data from <a href="https://testnet.nearblocks.io/" target="_blank" rel="noreferrer">NearBlocks <ExternalLink size={12}/></a>; recent confirmations are also saved in this browser.</p>
+      </section>}
       <footer className="page-footer"><span>Built at NEAR HACKATHON <span className="footer-plus">✳</span> 2026</span></footer>
     </main></div>
     {review&&<div className="modal-backdrop" onClick={()=>{if(!busy)setReview(false);}}><section className="review-modal" role="dialog" aria-modal="true" aria-labelledby="review-title" onClick={e=>e.stopPropagation()}><button className="modal-close icon-button" aria-label="Close review" disabled={busy} onClick={()=>setReview(false)}><X size={20}/></button><h2 id="review-title">Review airdrop</h2><p>Review carefully. The collection name, balances, and weekly limits cannot change after minting.</p><div className="review-facts"><div><span>Collection</span><b>{collectionName}</b></div><div><span>Reward</span><b>{title}</b></div><div><span>Weekly limit per NFT</span><b>{weekly} NEAR</b></div>{filled.map(r=><div key={r.id}><span>{r.account}</span><b>{r.amount||amount} NEAR</b></div>)}<div><span>Total attached</span><b>{quote===null?"Calculating...":fromYocto(quote)+" NEAR"}</b></div></div>{media.startsWith("data:")&&<p className="artwork-warning">Embedded artwork may be blank in external wallet galleries. Use a public image URL before minting if gallery display matters.</p>}<p className="field-help">Keydrop paid the one-time code cost. You fund rewards and collection state; unused per-token and registry storage allowances are refunded. Gas is additional.</p>{account?<button className="primary-button" disabled={busy} onClick={mint}>{busy?<LoaderCircle className="spin" size={18}/>:<Send size={17}/>}Confirm & airdrop<ArrowRight size={17}/></button>:<button className="primary-button" onClick={connectWallet}><Wallet size={18}/>Connect wallet to continue</button>}<span className="connect-hint">Your wallet will ask you to approve the transaction.</span></section></div>}

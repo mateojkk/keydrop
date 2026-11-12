@@ -45,3 +45,5 @@
 .claim-history-note{font-size:9px;color:#87947f;line-height:1.7;margin-top:15px}
 .claim-history-note a{color:#4e7546;text-decoration:underline;text-underline-offset:2px}
 .claim-history-note a svg{vertical-align:middle}
+.claim-history-error{font-size:10px;color:#a0523e;margin-top:12px}
+.claim-history-more{margin-top:14px;width:auto}
