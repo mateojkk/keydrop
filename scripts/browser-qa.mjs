@@ -44,6 +44,19 @@ try {
   assert.equal(await walletDialog.getByRole('button',{name:/MyNearWallet/}).count(),1);
   assert.doesNotMatch(await walletDialog.innerText(),/HERE/i);
   await walletDialog.getByRole('button',{name:'Close wallet chooser'}).click();
+  const meteorPage=await browser.newPage({viewport:{width:390,height:844},userAgent:'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 Mobile/15E148'});
+  await meteorPage.addInitScript(()=>{
+    window.__is_running_in_meteor_wallet_app__=true;
+    window.__meteorCalls=[];
+    window.ReactNativeWebView={postMessage:data=>{
+      const message=JSON.parse(data);window.__meteorCalls.push(message.method);
+      setTimeout(()=>window.dispatchEvent(new MessageEvent('message',{data:{nonce:message.nonce,response:message.method==='sign_in'?[{accountId:'alice.testnet'}]:{}}})),0);
+    }};
+  });
+  await meteorPage.goto(new URL('/create',page.url()).href);
+  await meteorPage.locator('.topbar .wallet-button').getByText('alice.testnet').waitFor({timeout:10000}).catch(async error=>{console.error('Meteor mobile calls:',await meteorPage.evaluate(()=>window.__meteorCalls));console.error('Meteor dialog:',await meteorPage.getByRole('dialog').allInnerTexts());throw error;});
+  assert.ok((await meteorPage.evaluate(()=>window.__meteorCalls)).includes('sign_in'),'Meteor mobile bridge must receive sign-in directly');
+  await meteorPage.close();
   await page.locator('#title').fill('Builder Collective');
   await page.locator('#collection-name').fill('Builder Collective Collection');
   await assert.equal(await page.locator('.nft-content h3').innerText(),'Builder Collective');
@@ -134,7 +147,7 @@ try {
   await page.goto(new URL('/doc',page.url()).href);
   await page.getByRole('heading',{name:'How Keydrop works'}).waitFor();
   assert.deepEqual(errors,[]);
-  writeFileSync('artifacts/browser-qa.json',JSON.stringify({passed:true,checks:['standalone landing page and CTAs','standalone documentation route and mobile layout','testnet wallet chooser','artwork upload, remove and re-upload','live preview','exact funding summary','review modal','duplicate validation','fixed notification toast','390px layout','recipient empty state','browser history and direct routes','no runtime errors']},null,2));
+  writeFileSync('artifacts/browser-qa.json',JSON.stringify({passed:true,checks:['standalone landing page and CTAs','standalone documentation route and mobile layout','testnet wallet chooser and Meteor in-app bridge','artwork upload, remove and re-upload','live preview','exact funding summary','review modal','duplicate validation','fixed notification toast','390px layout','recipient empty state','browser history and direct routes','no runtime errors']},null,2));
   console.log('Browser QA passed. Screenshots and report: artifacts/');
 } catch(error) {
   console.error('Browser errors:',errors);

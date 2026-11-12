@@ -3,6 +3,10 @@ import type { WalletSelector } from '@near-wallet-selector/core';
 export const contractId: string = import.meta.env.VITE_CONTRACT_ID || '';
 export const legacyContractId: string = import.meta.env.VITE_LEGACY_CONTRACT_ID || '';
 const rpc = import.meta.env.VITE_RPC_URL || 'https://test.rpc.fastnear.com';
+export function hasMeteorAppBridge() {
+  const browser=window as Window & {ReactNativeWebView?:{postMessage:(message:string)=>void};__is_running_in_meteor_wallet_app__?:boolean};
+  return Boolean(browser.ReactNativeWebView?.postMessage || browser.__is_running_in_meteor_wallet_app__);
+}
 export async function checkAccounts(accountIds: string[]) {
   await Promise.all(accountIds.map(async account_id => {
     const response = await fetch(rpc,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({jsonrpc:'2.0',id:'account',method:'query',params:{request_type:'view_account',finality:'final',account_id}})});
@@ -16,9 +20,10 @@ export function selector() {
   return selectorPromise ??= Promise.all([
     import('@near-wallet-selector/core'),
     import('@near-wallet-selector/meteor-wallet'),
+    hasMeteorAppBridge()?import('@near-wallet-selector/meteor-wallet-app'):Promise.resolve(null),
     import('@near-wallet-selector/my-near-wallet'),
-  ]).then(([{setupWalletSelector},{setupMeteorWallet},{setupMyNearWallet}])=>
-    setupWalletSelector({network: 'testnet', modules: [setupMeteorWallet(), setupMyNearWallet()]})).catch(error=>{selectorPromise=undefined;throw error;});
+  ]).then(([{setupWalletSelector},{setupMeteorWallet},meteorApp,{setupMyNearWallet}])=>
+    setupWalletSelector({network: 'testnet', modules: [setupMeteorWallet(), ...(meteorApp?[meteorApp.setupMeteorWalletApp({contractId})]:[]), setupMyNearWallet()]})).catch(error=>{selectorPromise=undefined;throw error;});
 }
 export async function view<T>(method: string, args: object, receiverId = contractId): Promise<T> {
   if (!contractId) throw new Error('No testnet contract configured yet. Follow the deployment steps in README.');

@@ -3,7 +3,7 @@
   "checks": [
     "standalone landing page and CTAs",
     "standalone documentation route and mobile layout",
-    "testnet wallet chooser",
+    "testnet wallet chooser and Meteor in-app bridge",
     "artwork upload, remove and re-upload",
     "live preview",
     "exact funding summary",

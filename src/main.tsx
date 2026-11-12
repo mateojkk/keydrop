@@ -1,9 +1,9 @@
 import './polyfills';
 import React, { useEffect, useRef, useState } from 'react';
+import type { BrowserWallet, InjectedWallet, InstantLinkWallet } from '@near-wallet-selector/core';
 import { createRoot } from 'react-dom/client';
-import type { InjectedWallet } from '@near-wallet-selector/core';
 import { ArrowUpRight, ArrowRight, Plus, X, Check, Wallet, Gift, Layers, ExternalLink, Upload, ImagePlus, ShieldCheck, Info, LoaderCircle, Copy, CircleHelp, ArrowDownToLine, Send, CheckCircle2, Link as LinkIcon } from 'lucide-react';
-import { call, contractId, legacyContractId, selector, view, assertSuccess, verifyTransactions, checkAccounts } from './near';
+import { call, contractId, legacyContractId, selector, view, assertSuccess, verifyTransactions, checkAccounts, hasMeteorAppBridge } from './near';
 import { toYocto, fromYocto, makeRecipients, validAccount } from './amounts.mjs';
 import './style.css';
 import './landing.css';
@@ -20,7 +20,7 @@ type NFT = { token_id: string; owner_id: string; metadata?: { title?: string; me
 type Collection = { account_id: string; name: string; creator_id: string };
 type Reward = { owner_id: string; balance: string; available: string; weekly_limit: string; spent_this_week: string; resets_at: string; pending: boolean };
 type Page = 'create' | 'rewards' | 'guide' | 'doc';
-type WalletId = 'meteor-wallet' | 'my-near-wallet';
+type WalletId = 'meteor-wallet' | 'meteor-wallet-app' | 'my-near-wallet';
 type Payout = NonNullable<ReturnType<typeof confirmedPayout>>;
 type Claim = Payout & { rewardContractId: string; recordedAt: number };
 const pagePaths: Record<Page,string> = { guide: '/', create: '/create', rewards: '/rewards', doc: '/doc' };
@@ -41,7 +41,7 @@ function LandingPage({onNavigate}:{onNavigate:(page:Page)=>void}) {
     event.preventDefault();onNavigate(page);
   };
   return <div className="landing-shell">
-    <header className="landing-header"><a className="brand" href="/"><span className="brand-icon">k<span>↗</span></span>keydrop<span className="brand-dot">®</span></a><nav aria-label="Site navigation"><a href="#how-it-works">How it works</a><a href="#contract">On-chain proof</a><a href="/doc" onClick={event=>navigate(event,'doc')}>Docs</a></nav></header>
+    <header className="landing-header"><a className="brand" href="/"><span className="brand-icon">k</span>keydrop<span className="brand-dot">®</span></a><nav aria-label="Site navigation"><a href="#how-it-works">How it works</a><a href="#contract">On-chain proof</a><a href="/doc" onClick={event=>navigate(event,'doc')}>Docs</a></nav></header>
     <main className="landing-content">
       <section className="landing-hero">
         <div className="landing-copy"><h1>Good work opens doors<span>.</span></h1><p>Contributor rewards that carry real value. Create and airdrop funded NFTs to ordinary NEAR wallets. The holder can spend within a weekly limit, and access moves with ownership.</p><div className="landing-actions"><a className="primary-button" href="/create" onClick={event=>navigate(event,'create')}>Create an airdrop<ArrowRight size={17}/></a><a className="secondary-button" href="/rewards" onClick={event=>navigate(event,'rewards')}>View my rewards<Gift size={16}/></a></div></div>
@@ -64,6 +64,8 @@ function App() {
   const [walletOpen,setWalletOpen] = useState(false);
   const [walletConnecting,setWalletConnecting] = useState<WalletId|null>(null);
   const [walletError,setWalletError] = useState('');
+  const meteorBridge=hasMeteorAppBridge();
+  const mobileWalletBrowser=/Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
   const [title,setTitle] = useState('Early Contributor');
   const [collectionName,setCollectionName] = useState('');
   const [description,setDescription] = useState('For the people who helped us get here. Thank you for building with us.');
@@ -285,13 +287,15 @@ function App() {
     try {if(file.size>8192)throw new Error('Metadata JSON must be smaller than 8 KiB.');const value=JSON.parse(await file.text());if(typeof value.title==='string')setTitle(value.title);if(typeof value.description==='string')setDescription(value.description);if(typeof value.media==='string'){setMedia(value.media);setFailedMedia('');setLocalImage('');}if(typeof value.reference==='string')setReference(value.reference);setNotice('Metadata imported. Review the fields before minting.');}catch(e){setNotice(errorText(e));}
   }
   const changePage=(p:Page)=>{if(location.pathname!==pagePaths[p])history.pushState({},'',pagePaths[p]);setPage(p);setNotice('');window.scrollTo(0,0);};
-  const connectWallet=()=>{setWalletError('');setWalletOpen(true);};
+  const connectWallet=()=>{setWalletError('');setWalletOpen(true);if(meteorBridge)void chooseWallet('meteor-wallet-app');};
   async function chooseWallet(id:WalletId){
     if(!contractId){setWalletError('No testnet contract is configured. See README for setup.');return;}
+    if(id==='meteor-wallet-app'&&!meteorBridge){setWalletError('Open Keydrop inside Meteor’s mobile app browser, then try Meteor mobile again.');return;}
     setWalletConnecting(id);setWalletError('');
     try{
-      const wallet=await(await selector()).wallet<InjectedWallet>(id);
+      const wallet=await(await selector()).wallet<BrowserWallet|InjectedWallet|InstantLinkWallet>(id);
       const accounts=await wallet.signIn({contractId});
+      if(!accounts?.length)throw new Error('The wallet did not return a testnet account. Select an account and retry.');
       setAccount(accounts[0]?.accountId||'');
       setWalletOpen(false);
     }catch(error){setWalletError(errorText(error));}
@@ -306,7 +310,7 @@ function App() {
 
   return <div className="app-shell">
     <aside className="sidebar">
-      <a className="brand" href="/" onClick={e=>{if(e.ctrlKey||e.metaKey||e.shiftKey||e.altKey)return;e.preventDefault();changePage('guide');}}><span className="brand-icon">k<span>↗</span></span>keydrop<span className="brand-dot">®</span></a>
+      <a className="brand" href="/" onClick={e=>{if(e.ctrlKey||e.metaKey||e.shiftKey||e.altKey)return;e.preventDefault();changePage('guide');}}><span className="brand-icon">k</span>keydrop<span className="brand-dot">®</span></a>
       <nav aria-label="Main navigation"><button className={page==='create'?'active':''} onClick={()=>changePage('create')}><Plus size={19}/>Create airdrop<span className="nav-shortcut">↗</span></button><button className={page==='rewards'?'active':''} onClick={()=>changePage('rewards')}><Gift size={19}/>My rewards</button></nav>
       <div className="sidebar-bottom"><a href="https://docs.near.org/primitives/nft" target="_blank" rel="noreferrer"><CircleHelp size={16}/>Help & documentation<ArrowUpRight size={14}/></a></div>
     </aside>
@@ -331,7 +335,7 @@ function App() {
       <footer className="page-footer"><span>Built at NEAR HACKATHON <span className="footer-plus">✳</span> 2026</span></footer>
     </main></div>
     {review&&<div className="modal-backdrop" onClick={()=>{if(!busy)setReview(false);}}><section className="review-modal" role="dialog" aria-modal="true" aria-labelledby="review-title" onClick={e=>e.stopPropagation()}><button className="modal-close icon-button" aria-label="Close review" disabled={busy} onClick={()=>setReview(false)}><X size={20}/></button><h2 id="review-title">Review airdrop</h2><p>Review carefully. The collection name, balances, and weekly limits cannot change after minting.</p><div className="review-facts"><div><span>Collection</span><b>{collectionName}</b></div><div><span>Reward</span><b>{title}</b></div><div><span>Weekly limit per NFT</span><b>{weekly} NEAR</b></div>{filled.map(r=><div key={r.id}><span>{r.account}</span><b>{r.amount||amount} NEAR</b></div>)}<div><span>Total attached</span><b>{quote===null?"Calculating...":fromYocto(quote)+" NEAR"}</b></div></div>{media.startsWith("data:")&&<p className="artwork-warning">Embedded artwork may be blank in external wallet galleries. Use a public image URL before minting if gallery display matters.</p>}<p className="field-help">Keydrop paid the one-time code cost. You fund rewards and collection state; unused per-token and registry storage allowances are refunded. Gas is additional.</p>{account?<button className="primary-button" disabled={busy} onClick={mint}>{busy?<LoaderCircle className="spin" size={18}/>:<Send size={17}/>}Confirm & airdrop<ArrowRight size={17}/></button>:<button className="primary-button" onClick={connectWallet}><Wallet size={18}/>Connect wallet to continue</button>}<span className="connect-hint">Your wallet will ask you to approve the transaction.</span></section></div>}
-    {walletOpen&&<div className="modal-backdrop" onClick={()=>{if(!walletConnecting)setWalletOpen(false);}}><section className="review-modal wallet-dialog" role="dialog" aria-modal="true" aria-labelledby="wallet-title" onClick={e=>e.stopPropagation()}><button className="modal-close icon-button" aria-label="Close wallet chooser" disabled={!!walletConnecting} onClick={()=>setWalletOpen(false)} autoFocus><X size={20}/></button><h2 id="wallet-title">Connect a testnet wallet</h2><p>Choose the wallet holding your NEAR testnet account.</p><div className="wallet-options"><button type="button" disabled={!!walletConnecting} onClick={()=>void chooseWallet('meteor-wallet')}><Wallet size={20}/><span><strong>Meteor Wallet</strong><small>Choose testnet in Meteor</small></span>{walletConnecting==='meteor-wallet'?<LoaderCircle className="spin" size={18}/>:<ArrowRight size={17}/>}</button><button type="button" disabled={!!walletConnecting} onClick={()=>void chooseWallet('my-near-wallet')}><Wallet size={20}/><span><strong>MyNearWallet</strong><small>Opens the testnet wallet in a new window</small></span>{walletConnecting==='my-near-wallet'?<LoaderCircle className="spin" size={18}/>:<ArrowRight size={17}/>}</button></div>{walletConnecting&&<p className="wallet-progress" role="status">Complete the connection in {walletConnecting==='meteor-wallet'?'Meteor':'the MyNearWallet window'}.</p>}{walletError&&<p className="review-error" role="alert">{walletError}</p>}<p className="wallet-help">Need a wallet? <a href="https://meteorwallet.app/" target="_blank" rel="noreferrer">Get Meteor<ExternalLink size={12}/></a> or <a href="https://testnet.mynearwallet.com/" target="_blank" rel="noreferrer">open MyNearWallet<ExternalLink size={12}/></a>.</p></section></div>}
+    {walletOpen&&<div className="modal-backdrop" onClick={()=>{if(!walletConnecting)setWalletOpen(false);}}><section className="review-modal wallet-dialog" role="dialog" aria-modal="true" aria-labelledby="wallet-title" onClick={e=>e.stopPropagation()}><button className="modal-close icon-button" aria-label="Close wallet chooser" disabled={!!walletConnecting} onClick={()=>setWalletOpen(false)} autoFocus><X size={20}/></button><h2 id="wallet-title">Connect a testnet wallet</h2><p>Choose the wallet holding your NEAR testnet account.</p><div className="wallet-options">{meteorBridge?<button type="button" disabled={!!walletConnecting} onClick={()=>void chooseWallet('meteor-wallet-app')}><Wallet size={20}/><span><strong>Meteor mobile</strong><small>Connect inside Meteor’s app browser on testnet</small></span>{walletConnecting==='meteor-wallet-app'?<LoaderCircle className="spin" size={18}/>:<ArrowRight size={17}/>}</button>:mobileWalletBrowser?<p className="wallet-mobile-hint">Open Keydrop in Meteor’s app browser to connect Meteor, or use MyNearWallet below.</p>:<button type="button" disabled={!!walletConnecting} onClick={()=>void chooseWallet('meteor-wallet')}><Wallet size={20}/><span><strong>Meteor Wallet</strong><small>Browser extension · choose testnet in Meteor</small></span>{walletConnecting==='meteor-wallet'?<LoaderCircle className="spin" size={18}/>:<ArrowRight size={17}/>}</button>}<button type="button" disabled={!!walletConnecting} onClick={()=>void chooseWallet('my-near-wallet')}><Wallet size={20}/><span><strong>MyNearWallet</strong><small>Opens the testnet wallet in a new window</small></span>{walletConnecting==='my-near-wallet'?<LoaderCircle className="spin" size={18}/>:<ArrowRight size={17}/>}</button></div>{walletConnecting&&<p className="wallet-progress" role="status">Complete the connection in {walletConnecting==='meteor-wallet-app'?'Meteor mobile':walletConnecting==='meteor-wallet'?'Meteor':'the MyNearWallet window'}.</p>}{walletError&&<p className="review-error" role="alert">{walletError}</p>}<p className="wallet-help">Need a wallet? <a href="https://meteorwallet.app/" target="_blank" rel="noreferrer">Get Meteor<ExternalLink size={12}/></a> or <a href="https://testnet.mynearwallet.com/" target="_blank" rel="noreferrer">open MyNearWallet<ExternalLink size={12}/></a>.</p></section></div>}
   </div>;
 }
 

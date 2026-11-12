@@ -34,7 +34,7 @@ npm run dev
 
 Copy .env.example to .env.local for development. It points to the factory, the legacy contract, and a testnet RPC. PowerShell users can run npm.cmd if execution policy blocks npm.ps1. Open the Vite URL, normally http://127.0.0.1:5173.
 
-The landing page is /; the standalone documentation page is /doc; the project workspace is /create; recipients use /rewards. Connect a testnet Meteor or MyNearWallet account. Never put wallet keys in environment variables or the repository.
+The landing page is /; the standalone documentation page is /doc; the project workspace is /create; recipients use /rewards. Connect a testnet Meteor or MyNearWallet account. The app calls Meteor's in-app connector directly when opened inside Meteor's mobile browser; desktop Meteor uses the browser extension connector. Never put wallet keys in environment variables or the repository.
 
 ## Create an airdrop
 
