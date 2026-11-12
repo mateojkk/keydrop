@@ -29,10 +29,16 @@ jobs:
           workspaces: contract
       - run: cargo test
       - run: cargo build --target wasm32-unknown-unknown --release
+      - run: cargo test
+        working-directory: factory
+      - run: cargo build --target wasm32-unknown-unknown --release
+        working-directory: factory
       - uses: actions/upload-artifact@v4
         with:
-          name: keydrop-contract
-          path: contract/target/wasm32-unknown-unknown/release/keydrop.wasm
+          name: keydrop-v2-contracts
+          path: |
+            contract/target/wasm32-unknown-unknown/release/keydrop.wasm
+            factory/target/wasm32-unknown-unknown/release/keydrop_factory.wasm
       - uses: actions/upload-artifact@v4
         with:
           name: keydrop-cargo-lock

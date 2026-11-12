@@ -11,10 +11,9 @@ fn context(who: &str, deposit: u128, time: u64) {
 }
 fn minted() -> Contract {
     context("project.testnet", 20 * 10u128.pow(24), 1);
-    let mut c = Contract::new();
-    c.create_airdrop(TokenMetadata { title: Some("Contributor".into()), ..Default::default() },
-        U128(3), vec![Recipient { account_id: account("alice.testnet"), amount: U128(10) }, Recipient { account_id: account("bob.testnet"), amount: U128(20) }]);
-    c
+    Contract::new("Builder Collective".into(), account("project.testnet"),
+        TokenMetadata { title: Some("Contributor".into()), ..Default::default() }, U128(3),
+        vec![Recipient { account_id: account("alice.testnet"), amount: U128(10) }, Recipient { account_id: account("bob.testnet"), amount: U128(20) }])
 }
 fn settle(c: &mut Contract, success: bool) {
     let callback_time = env::block_timestamp() + 1;
@@ -79,9 +78,22 @@ fn cannot_transfer_unsettled_funds() {
 #[test]
 #[should_panic(expected = "Attach at least")]
 fn underfunding_rejected() {
-    let mut c = minted(); context("project.testnet", 0, 2);
-    c.create_airdrop(TokenMetadata { title: Some("Test".into()), ..Default::default() }, U128(1),
+    context("project.testnet", 0, 2);
+    Contract::new("Builder Collective".into(), account("project.testnet"),
+        TokenMetadata { title: Some("Test".into()), ..Default::default() }, U128(1),
         vec![Recipient { account_id: account("carol.testnet"), amount: U128(10) }]);
+}
+
+#[test]
+fn collection_name_is_set_once_at_creation() {
+    let mut c = minted();
+    assert_eq!(c.nft_metadata().name, "Builder Collective");
+    context("project.testnet", 20 * 10u128.pow(24), 2);
+    let result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+        c.create_airdrop(TokenMetadata { title: Some("Again".into()), ..Default::default() }, U128(1),
+            vec![Recipient { account_id: account("alice.testnet"), amount: U128(1) }]);
+    }));
+    assert!(result.is_err());
 }
 
 #[test]

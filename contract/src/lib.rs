@@ -55,23 +55,33 @@ pub struct Contract {
     rewards: LookupMap<TokenId, Reward>,
     transfer_calls: LookupMap<TokenId, bool>,
     next_id: u64,
+    collection_name: String,
+    minter_id: AccountId,
+    minted: bool,
 }
 
 #[near]
 impl Contract {
     #[init]
-    pub fn new() -> Self {
-        Self {
+    #[payable]
+    pub fn new(collection_name: String, minter_id: AccountId, metadata: TokenMetadata, weekly_limit: U128, recipients: Vec<Recipient>) -> Self {
+        require!(!collection_name.trim().is_empty() && collection_name.len() <= 120, "Collection name required (max 120 bytes)");
+        let mut contract = Self {
             tokens: NonFungibleToken::new(b"t".to_vec(), env::current_account_id(),
                 Some(b"m".to_vec()), Some(b"e".to_vec()), None::<Vec<u8>>),
             rewards: LookupMap::new(b"r".to_vec()),
             transfer_calls: LookupMap::new(b"c".to_vec()), next_id: 0,
-        }
+            collection_name, minter_id, minted: false,
+        };
+        contract.create_airdrop(metadata, weekly_limit, recipients);
+        contract
     }
 
     /// Permissionless, fully funded atomic airdrop. No setter, clawback or upgrade method.
     #[payable]
     pub fn create_airdrop(&mut self, metadata: TokenMetadata, weekly_limit: U128, recipients: Vec<Recipient>) -> Vec<TokenId> {
+        require!(!self.minted, "Collection already minted");
+        require!(env::predecessor_account_id() == self.minter_id, "Only the factory can mint this collection");
         require!(!recipients.is_empty() && recipients.len() <= MAX_BATCH, "Use 1 to 20 recipients");
         require!(weekly_limit.0 > 0, "Weekly limit must be positive");
         require!(metadata.title.as_ref().is_some_and(|s| !s.trim().is_empty() && s.len() <= 120), "Title required (max 120 bytes)");
@@ -99,9 +109,8 @@ impl Contract {
         let required = funding.checked_add(storage).expect("Deposit overflow");
         let attached = env::attached_deposit().as_yoctonear();
         require!(attached >= required, format!("Attach at least {} yoctoNEAR for rewards and storage", required));
-        if attached > required {
-            Promise::new(env::predecessor_account_id()).transfer(NearToken::from_yoctonear(attached - required));
-        }
+        self.minted = true;
+        if attached > required { Promise::new(env::signer_account_id()).transfer(NearToken::from_yoctonear(attached - required)); }
         ids
     }
 
@@ -202,7 +211,7 @@ impl NonFungibleTokenEnumeration for Contract {
 #[near]
 impl NonFungibleTokenMetadataProvider for Contract {
     fn nft_metadata(&self) -> NFTContractMetadata {
-        NFTContractMetadata { spec: NFT_METADATA_SPEC.into(), name: "Keydrop Contributor Rewards".into(), symbol: "KEYDROP".into(), icon: None, base_uri: None, reference: None, reference_hash: None }
+        NFTContractMetadata { spec: NFT_METADATA_SPEC.into(), name: self.collection_name.clone(), symbol: "KEYDROP".into(), icon: None, base_uri: None, reference: None, reference_hash: None }
     }
 }
 

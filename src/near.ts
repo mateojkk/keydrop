@@ -1,6 +1,7 @@
 import type { WalletSelector } from '@near-wallet-selector/core';
 
 export const contractId: string = import.meta.env.VITE_CONTRACT_ID || '';
+export const legacyContractId: string = import.meta.env.VITE_LEGACY_CONTRACT_ID || '';
 const rpc = import.meta.env.VITE_RPC_URL || 'https://test.rpc.fastnear.com';
 export async function checkAccounts(accountIds: string[]) {
   await Promise.all(accountIds.map(async account_id => {
@@ -19,20 +20,20 @@ export function selector() {
   ]).then(([{setupWalletSelector},{setupMeteorWallet},{setupMyNearWallet}])=>
     setupWalletSelector({network: 'testnet', modules: [setupMeteorWallet(), setupMyNearWallet()]})).catch(error=>{selectorPromise=undefined;throw error;});
 }
-export async function view<T>(method: string, args: object): Promise<T> {
+export async function view<T>(method: string, args: object, receiverId = contractId): Promise<T> {
   if (!contractId) throw new Error('No testnet contract configured yet. Follow the deployment steps in README.');
   const bytes = new TextEncoder().encode(JSON.stringify(args));
-  const response = await fetch(rpc, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({jsonrpc:'2.0',id:'keydrop',method:'query',params:{request_type:'call_function',finality:'final',account_id:contractId,method_name:method,args_base64:btoa(String.fromCharCode(...bytes))}})});
+  const response = await fetch(rpc, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({jsonrpc:'2.0',id:'keydrop',method:'query',params:{request_type:'call_function',finality:'final',account_id:receiverId,method_name:method,args_base64:btoa(String.fromCharCode(...bytes))}})});
   if (!response.ok) throw new Error('The testnet RPC is unavailable. Try again.');
   const data = await response.json();
   if (data.error || data.result?.error) throw new Error(data.error?.message || data.result.error);
   return JSON.parse(new TextDecoder().decode(new Uint8Array(data.result.result)));
 }
-export async function call(methodName: string, args: object, deposit = '1') {
+export async function call(methodName: string, args: object, deposit = '1', receiverId = contractId) {
   const s = await selector();
   const wallet = await s.wallet();
   const { actionCreators } = await import('@near-js/transactions');
-  return wallet.signAndSendTransaction({receiverId:contractId, actions:[actionCreators.functionCall(methodName,args,250000000000000n,BigInt(deposit))]});
+  return wallet.signAndSendTransaction({receiverId, actions:[actionCreators.functionCall(methodName,args,300000000000000n,BigInt(deposit))]});
 }
 export async function verifyTransactions(hashes: string[], account: string) {
   const outcomes = [];
