@@ -19,4 +19,10 @@
 .wallet-help a{display:inline-flex;align-items:center;gap:2px;color:#4c7545;text-decoration:underline;text-underline-offset:3px}
 .artwork-warning{background:#fff5e8;border:1px solid #ebd8b6;border-radius:7px;padding:11px;color:#785e38!important}
 .recipient-nft .payout-account{width:100%;min-width:0;margin:2px 0 8px;font-size:11px}
+.payout-confirmation{display:flex;align-items:center;justify-content:space-between;gap:18px;margin:-8px 0 22px;padding:16px 19px;border:1px solid #bfd7b1;border-radius:9px;background:#edf8e7;color:#345a31}
+.payout-confirmation small{display:block;font-size:9px;color:#69875f}
+.payout-confirmation strong{display:block;margin:3px 0;font-size:24px;line-height:1.2}
+.payout-confirmation p{font-size:10px}
+.payout-confirmation a{display:inline-flex;align-items:center;gap:5px;font-size:10px;text-decoration:underline;white-space:nowrap}
+@media(max-width:700px){.payout-confirmation{align-items:flex-start;flex-direction:column;gap:11px}.payout-confirmation strong{font-size:21px}}
 @media(max-width:700px){.sidebar nav{margin-top:0}.main-shell main{padding-top:24px}.workspace-heading h1{font-size:23px}.preview-column{grid-row:auto}}

@@ -35,12 +35,15 @@ export async function call(methodName: string, args: object, deposit = '1') {
   return wallet.signAndSendTransaction({receiverId:contractId, actions:[actionCreators.functionCall(methodName,args,250000000000000n,BigInt(deposit))]});
 }
 export async function verifyTransactions(hashes: string[], account: string) {
+  const outcomes = [];
   for (const hash of hashes) {
-    const response = await fetch(rpc, {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({jsonrpc:'2.0',id:'receipt',method:'tx',params:{tx_hash:hash,sender_account_id:account,wait_until:'FINAL'}})});
+    const response = await fetch(rpc, {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({jsonrpc:'2.0',id:'receipt',method:'EXPERIMENTAL_tx_status',params:[hash,account]})});
     const data = await response.json();
-    if (data.error) throw new Error('Transaction status is unavailable. Check the transaction in NearBlocks before retrying.');
+    if (!response.ok || data.error || !data.result) throw new Error('Transaction status is unavailable. Check the transaction in NearBlocks before retrying.');
     assertSuccess(data.result);
+    outcomes.push(data.result);
   }
+  return outcomes;
 }
 export function assertSuccess(outcome: any) {
   if (!outcome) throw new Error('No transaction result. Check your wallet before retrying.');

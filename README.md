@@ -125,9 +125,12 @@ Import a NEP-177 JSON file using **Import JSON**, or fill the name and descripti
 1. Connect the project wallet. Upload artwork (or provide its public URL). Name the reward **Early Contributor**. Set default balance **10 NEAR** and weekly limit **2 NEAR**. Add Alice and Bob's actual testnet account IDs; optionally give Bob **15 NEAR**. Review and approve the atomic airdrop. Save the transaction URL.
 2. Sign out and connect Alice. Open **My rewards** and refresh from chain. The app shows her NFT, 10 NEAR remaining, and 2 NEAR available. Also open her wallet's NFT gallery if it indexes the contract; app enumeration works without an indexer.
 3. In **My rewards**, enter **1 NEAR** under **Send NEAR from this NFT**. Leave the recipient blank to pay the connected holder, or enter another existing testnet account to pay it directly. Approve in the holder's wallet. Wait for final confirmation and refresh: balance **9**, current available allowance **1**. Save the transaction URL and wallet balance change.
+
 4. Request **1.5 NEAR** again. The app deliberately permits submitting an excess request for this demo; the contract rejects it with `Weekly spending limit exceeded`. Balance and allowance stay unchanged (gas is still paid). Save the failed transaction URL.
 5. **My rewards** shows **Access verified**, sourced from `has_access(account_id)`. Verify the same view via CLI if desired (below).
 6. Transfer Alice's NFT to Carol using **Transfer reward NFT**. Confirm the destination. Connect Carol: balance **9**, allowance **1**, and access verified. Connect Alice: that NFT is gone and access is false if she has no other NFTs from this contract. Bob's NFT is unaffected. Save the transfer transaction and before/after screenshots.
+
+After a spend settles, Keydrop verifies the contract-to-recipient transfer receipt and shows **+1 NEAR** when the connected holder received it. Payments to another account show that recipient instead. The latest verified payment remains visible in that browser. Wallet activity lists may label the signed action as a `spend` contract call; Keydrop's payment card links to the transaction containing the transfer receipt.
 
 The weekly reset is seven days after mint, without a transfer reset. Unit tests advance block time to test this boundary; do not shorten the production rule for a video.
 
@@ -157,6 +160,8 @@ All amounts are **decimal strings in yoctoNEAR**, where 1 NEAR = 10²⁴ yoctoNE
 Approval management is intentionally disabled; only owners transfer or spend. `resolve_spend` and `nft_resolve_transfer` are private callbacks. `spend` can pay any valid NEAR account except the reward contract itself; the app defaults to the connected holder and accepts a different recipient account. The receiver must exist for native transfers to named accounts. Access checks should be called from your gated contract using `has_access` and an authenticated account ID; a screenshot or frontend boolean is not an authentication proof.
 
 Metadata may contain externally hosted mutable images; only the recorded URI and contract reward settings are immutable. Use content-addressed IPFS or the embedded WebP path for immutable artwork. Recipient enumeration currently displays the first 100 held NFTs; larger portfolios should page with `from_index`.
+
+The deployed collection name (`Keydrop Contributor Rewards`) is hard-coded in `nft_metadata`, and `keydrop-mateo.testnet` has no remaining access keys. Neither the collection name nor contract account ID can be changed on this deployment. A new collection name requires a new contract account and deployment; existing NFTs stay with the original contract. New NFTs on the current contract can use any valid token title, but previously minted titles cannot be edited.
 
 ## Submission checklist
 
