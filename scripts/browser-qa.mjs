@@ -41,7 +41,17 @@ try {
     ctx.fillStyle='#2f5b38';ctx.font='bold 150px sans-serif';ctx.fillText('K',75,185);
     return c.toDataURL('image/png').split(',')[1];
   });
-  await page.locator('input[type=file][accept="image/png,image/jpeg,image/webp,image/gif"]').setInputFiles({name:'reward.png',mimeType:'image/png',buffer:Buffer.from(image,'base64')});
+  const artworkFile={name:'reward.png',mimeType:'image/png',buffer:Buffer.from(image,'base64')};
+  const artworkInput=page.locator('input[type=file][accept="image/png,image/jpeg,image/webp,image/gif"]');
+  await artworkInput.setInputFiles(artworkFile);
+  await page.getByRole('status').filter({hasText:'Artwork embedded on-chain'}).waitFor();
+  await page.getByRole('button',{name:'Dismiss notification'}).click();
+  assert.match(await page.locator('#media').inputValue(),/^data:image\/webp;base64,/);
+  await page.getByRole('button',{name:'Remove image'}).click();
+  assert.equal(await page.locator('#media').inputValue(),'');
+  assert.equal(await page.locator('.art-container img').count(),0,'Removing artwork must clear the NFT preview');
+  assert.equal(await page.getByRole('button',{name:'Remove image'}).count(),0);
+  await artworkInput.setInputFiles(artworkFile);
   await page.getByRole('status').filter({hasText:'Artwork embedded on-chain'}).waitFor();
   await page.getByRole('button',{name:'Dismiss notification'}).click();
   assert.match(await page.locator('#media').inputValue(),/^data:image\/webp;base64,/);
@@ -89,7 +99,7 @@ try {
   await page.goto(new URL('/rewards',page.url()).href);
   await page.getByRole('heading',{name:'Connect your wallet'}).waitFor();
   assert.deepEqual(errors,[]);
-  writeFileSync('artifacts/browser-qa.json',JSON.stringify({passed:true,checks:['standalone landing page and CTAs','testnet wallet chooser','artwork upload and WebP encoding','live preview','exact funding summary','review modal','duplicate validation','390px layout','recipient empty state','browser history and direct routes','no runtime errors']},null,2));
+  writeFileSync('artifacts/browser-qa.json',JSON.stringify({passed:true,checks:['standalone landing page and CTAs','testnet wallet chooser','artwork upload, remove and re-upload','live preview','exact funding summary','review modal','duplicate validation','390px layout','recipient empty state','browser history and direct routes','no runtime errors']},null,2));
   console.log('Browser QA passed. Screenshots and report: artifacts/');
 } catch(error) {
   console.error('Browser errors:',errors);
