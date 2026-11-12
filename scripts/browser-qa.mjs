@@ -51,6 +51,7 @@ try {
   await page.locator('.summary-total strong').getByText(/\d+\.\d+ NEAR/).waitFor();
   const quotedTotal=Number.parseFloat(await page.locator('.summary-total strong').innerText());
   assert.ok(quotedTotal>25,'Collection deployment must be included in the total');
+  assert.ok(quotedTotal<26,'Shared code should keep collection overhead below 1 NEAR');
   await page.getByRole('button',{name:'Review airdrop'}).click();
   const dialog=page.getByRole('dialog');await dialog.waitFor();
   assert.match(await dialog.innerText(),/alice.testnet/);

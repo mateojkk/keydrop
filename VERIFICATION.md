@@ -1,6 +1,14 @@
 # Verification status
 
-## Collection factory (current deployment)
+## Lower-cost shared-code deployment (current factory)
+
+- [GitHub Actions run 43304128725](https://github.com/mateojkk/keydrop/actions/runs/43304128725) passed frontend checks, child tests/build, factory tests/build, including the new quote test. The factory source pins the SHA-256 of [keydrop-global.wasm](artifacts/keydrop-global.wasm), which is the same child code already exercised by the first two testnet collections.
+- [Global code publication](https://explorer.testnet.near.org/transactions/DB85fEgYocn7s6emUNZCYBePDVw6rRygkUAV5hAFMtBc) published child hash `BF521C30B4A9D4909C956E8FB4A88BF0A8B95F92A6351EB01BC6DFB264802D1B` once. Keydrop paid 47.7418 testnet NEAR for this shared infrastructure. [Factory upgrade](https://explorer.testnet.near.org/transactions/A2Vvzx4ijiFmYqDRb7CgRA3K8bRceoTVTgF6AvVijPQi) preserved its existing two-collection registry.
+- Live `get_required` now returns **0.37032 NEAR upfront** for one 0.1 NEAR reward, versus 5.64381 NEAR before shared code. Its 0.12 NEAR per-token storage allowance and 0.05 NEAR registry allowance refund unused amounts; the small collection state reserve remains in the child.
+- [Low-cost collection creation](https://explorer.testnet.near.org/transactions/GLUg36a8MMo1tCV6JkppJhSaAnoRHwrx4nDqtR9JwELq) minted token 0 directly to Bob at `c2.keydrop.testnet`. `nft_metadata().name` returned **Shared Code Thanks**. The account reported global code by hash, 1.2 KB total storage, and zero access keys.
+- Bob [spent 0.02 NEAR](https://explorer.testnet.near.org/transactions/9d7mcizxfxah8dmmVP42g2w3HmFwqA1KUZRV41Lb38oW). A subsequent [0.04 NEAR attempt](https://explorer.testnet.near.org/transactions/GeHovmYcRr5Gm1QB7FJ7fXGTBYcSYT1RrRSnyiGGeXzo) failed over the remaining 0.03 NEAR weekly allowance. Bob then transferred the NFT to Alice; final on-chain reads returned 0.08 NEAR balance, 0.03 NEAR available, Bob access `false`, and Alice access `true`.
+
+## Earlier per-collection-code deployment
 
 - [GitHub Actions run 43267576070](https://github.com/mateojkk/keydrop/actions/runs/43267576070) passed the frontend build and tests, native child contract tests, child WASM build, and factory WASM build. The exact CI artifacts deployed were 477,381-byte child WASM (SHA-256 `BF521C30B4A9D4909C956E8FB4A88BF0A8B95F92A6351EB01BC6DFB264802D1B`) and 801,483-byte factory WASM (SHA-256 `4FEFF3DFE2B9C79BFAF432C1E660AAF9BF64893739700E54DD172356D3724B64`).
 - [Factory deployment](https://explorer.testnet.near.org/transactions/9Nai7x9WMPhHS1nwpJmR3bo1WgLdbBG6iKM9zvDCNnku) initialized `keydrop.testnet`. Its on-chain `get_required` quoted 5.64381 NEAR for one 0.1 NEAR recipient and 5.86381 NEAR for two 0.1 NEAR recipients.
@@ -9,7 +17,7 @@
 - [Transfer](https://explorer.testnet.near.org/transactions/HJMMMHYRaZfvsEqnR8Le7nTAFH7pnoKkGLZCU4NPRDDY) moved token 0 to Carol. Final RPC reads returned Alice access `false`, Carol access `true`, balance 0.08 NEAR, available 0.03 NEAR.
 - A second factory call created `c1.keydrop.testnet` with the distinct collection name **Open Source Thank You**. Its two tokens went directly to Alice and Bob. The factory's on-chain collection count is 2. This verifies that collection names are independent per airdrop, not a shared factory label.
 
-The v2 frontend build and four unit tests passed. Headless Brave passed `scripts/browser-qa.mjs` for the current factory frontend, including the collection-name field, wallet chooser, artwork, funding quote, review dialog, and mobile layout. Browser-wallet signing still needs a human wallet session. The factory key remains available; child accounts have no access keys.
+The v2 frontend build and four unit tests passed. Headless Brave passed `scripts/browser-qa.mjs` for the factory frontend, including the collection-name field, wallet chooser, artwork, funding quote, review dialog, and mobile layout. Browser-wallet signing still needs a human wallet session. The factory key remains available; child accounts have no access keys.
 
 ## Source and build
 

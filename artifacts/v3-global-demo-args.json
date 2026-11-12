@@ -1,0 +1,16 @@
+{
+  "collection_name": "Shared Code Thanks",
+  "metadata": {
+    "title": "Global Contributor Reward",
+    "description": "A low-cost Keydrop collection with an immutable shared NFT contract.",
+    "media": "https://raw.githubusercontent.com/mateojkk/keydrop/main/public/favicon.svg",
+    "copies": 1
+  },
+  "weekly_limit": "50000000000000000000000",
+  "recipients": [
+    {
+      "account_id": "keydrop-bob-mateo.testnet",
+      "amount": "100000000000000000000000"
+    }
+  ]
+}
