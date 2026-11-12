@@ -28,3 +28,4 @@
 .payout-confirmation a{display:inline-flex;align-items:center;gap:5px;font-size:10px;text-decoration:underline;white-space:nowrap}
 @media(max-width:700px){.payout-confirmation{align-items:flex-start;flex-direction:column;gap:11px}.payout-confirmation strong{font-size:21px}}
 @media(max-width:700px){.sidebar nav{margin-top:0}.main-shell main{padding-top:24px}.workspace-heading h1{font-size:23px}.preview-column{grid-row:auto}}
+.media-error{display:block;color:#a33f32;font-weight:600;margin-top:5px}
