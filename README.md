@@ -39,6 +39,8 @@ npm run dev
 
 Open the Local URL printed by Vite. You can edit and preview a campaign without a wallet. Transactions require `VITE_CONTRACT_ID` to point to this deployed contract. No fake wallet connection or simulated mint success is used.
 
+The app opens on **How it works** at `/`. **Create airdrop** is `/create`, and **My rewards** is `/rewards`. Navigation updates the URL and supports direct links, refresh, and browser back/forward. The Vercel SPA rewrite in `vercel.json` serves these routes from the same frontend build.
+
 ## Deploy the monorepo on Vercel
 
 Import [`mateojkk/keydrop`](https://github.com/mateojkk/keydrop) as one Vercel project. Set **Root Directory** to the repository root (`.`), **Framework Preset** to Vite, and use the committed `vercel.json` settings: `npm ci`, `npm run build`, and output directory `dist`. The Rust contract in `contract/` is a separate package in the same repository; Vercel deploys the frontend and `api/` function, not the contract WASM. The contract is already deployed on NEAR testnet.

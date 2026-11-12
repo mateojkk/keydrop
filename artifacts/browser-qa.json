@@ -1,6 +1,7 @@
 {
   "passed": true,
   "checks": [
+    "landing route and CTA",
     "artwork upload and WebP encoding",
     "live preview",
     "exact funding summary",
@@ -8,7 +9,7 @@
     "duplicate validation",
     "390px layout",
     "recipient empty state",
-    "guide navigation",
+    "browser history and direct routes",
     "no runtime errors"
   ]
 }
