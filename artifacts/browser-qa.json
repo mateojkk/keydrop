@@ -2,6 +2,7 @@
   "passed": true,
   "checks": [
     "standalone landing page and CTAs",
+    "standalone documentation route and mobile layout",
     "testnet wallet chooser",
     "artwork upload, remove and re-upload",
     "live preview",

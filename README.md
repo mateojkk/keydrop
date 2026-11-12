@@ -34,7 +34,7 @@ npm run dev
 
 Copy .env.example to .env.local for development. It points to the factory, the legacy contract, and a testnet RPC. PowerShell users can run npm.cmd if execution policy blocks npm.ps1. Open the Vite URL, normally http://127.0.0.1:5173.
 
-The landing page is /; the project workspace is /create; recipients use /rewards. Connect a testnet Meteor or MyNearWallet account. Never put wallet keys in environment variables or the repository.
+The landing page is /; the standalone documentation page is /doc; the project workspace is /create; recipients use /rewards. Connect a testnet Meteor or MyNearWallet account. Never put wallet keys in environment variables or the repository.
 
 ## Create an airdrop
 
@@ -45,6 +45,8 @@ The landing page is /; the project workspace is /create; recipients use /rewards
 5. Connect a recipient at /rewards. The app discovers registered collections, reads balances and allowances, and calls each child's has_access.
 6. Send NEAR from the NFT to the holder or another existing account. Keydrop verifies the transfer receipt before displaying a +NEAR confirmation for a payment to the connected holder. Meteor may label the signed action as a spend call in its own activity feed.
 7. Transfer the NFT. Its remaining balance, current weekly usage, and access follow the new holder.
+
+My rewards disables Send when the current weekly allowance or funded balance is zero. Before wallet approval, the app reads the latest on-chain reward state and rejects requests above the available amount so a stale page does not waste gas. The contract remains the final spending authority. Claim history stores only payments whose transfer receipts the app verified, including the previously saved latest payment. This history is local to the current browser; use NearBlocks for older transactions or activity from other devices.
 
 Duplicate protection: recipient IDs must be unique within one airdrop, enforced in both the form and factory. The form also remembers the same wallet's exact campaign in this browser, blocks repeat approval for 30 minutes while a wallet transaction may be pending, and blocks it after confirmation. Changing recipient order does not bypass this check. This browser guard does not prevent a second mint from another browser or a direct factory call; that requires a future factory upgrade with a stored sender-scoped request ID.
 

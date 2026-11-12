@@ -10,17 +10,21 @@ import './landing.css';
 import './workspace.css';
 import { encodeArtwork } from './artwork';
 import { confirmedPayout } from './payout.mjs';
+import { canSpend, assertSpendable } from './reward-spend.mjs';
+import { claimHistoryKey, readClaimHistory, rememberClaim } from './claim-history.mjs';
+import { DocsPage } from './docs';
 import { campaignSignature, mintRecordKey, findMint, saveMint, clearPendingMint } from './mint-guard.mjs';
 
 type Row = { id: number; account: string; amount: string };
 type NFT = { token_id: string; owner_id: string; metadata?: { title?: string; media?: string; description?: string }; contract_id: string; collection_name: string };
 type Collection = { account_id: string; name: string; creator_id: string };
-type Reward = { balance: string; available: string; weekly_limit: string; spent_this_week: string; resets_at: string; pending: boolean };
-type Page = 'create' | 'rewards' | 'guide';
+type Reward = { owner_id: string; balance: string; available: string; weekly_limit: string; spent_this_week: string; resets_at: string; pending: boolean };
+type Page = 'create' | 'rewards' | 'guide' | 'doc';
 type WalletId = 'meteor-wallet' | 'my-near-wallet';
 type Payout = NonNullable<ReturnType<typeof confirmedPayout>>;
-const pagePaths: Record<Page,string> = { guide: '/', create: '/create', rewards: '/rewards' };
-const pageFromPath = (path: string): Page => path.replace(/\/+$/, '') === '/create' ? 'create' : path.replace(/\/+$/, '') === '/rewards' ? 'rewards' : 'guide';
+type Claim = Payout & { rewardContractId: string; recordedAt: number };
+const pagePaths: Record<Page,string> = { guide: '/', create: '/create', rewards: '/rewards', doc: '/doc' };
+const pageFromPath = (path: string): Page => {const normalized=path.replace(/\/+$/, '');return normalized==='/create'?'create':normalized==='/rewards'?'rewards':normalized==='/doc'?'doc':'guide';};
 const money = (value: string) => { const n = Number(fromYocto(value)); return n.toLocaleString(undefined, {maximumFractionDigits: 5}); };
 const errorText = (e: unknown) => e instanceof Error ? e.message : String(e);
 const payoutNotice = (payout: Payout, account: string) => payout.receiverId===account
@@ -37,7 +41,7 @@ function LandingPage({onNavigate}:{onNavigate:(page:Page)=>void}) {
     event.preventDefault();onNavigate(page);
   };
   return <div className="landing-shell">
-    <header className="landing-header"><a className="brand" href="/"><span className="brand-icon">k<span>↗</span></span>keydrop<span className="brand-dot">®</span></a><nav aria-label="Site navigation"><a href="#how-it-works">How it works</a><a href="#contract">On-chain proof</a></nav></header>
+    <header className="landing-header"><a className="brand" href="/"><span className="brand-icon">k<span>↗</span></span>keydrop<span className="brand-dot">®</span></a><nav aria-label="Site navigation"><a href="#how-it-works">How it works</a><a href="#contract">On-chain proof</a><a href="/doc" onClick={event=>navigate(event,'doc')}>Docs</a></nav></header>
     <main className="landing-content">
       <section className="landing-hero">
         <div className="landing-copy"><h1>Good work opens doors<span>.</span></h1><p>Contributor rewards that carry real value. Create and airdrop funded NFTs to ordinary NEAR wallets. The holder can spend within a weekly limit, and access moves with ownership.</p><div className="landing-actions"><a className="primary-button" href="/create" onClick={event=>navigate(event,'create')}>Create an airdrop<ArrowRight size={17}/></a><a className="secondary-button" href="/rewards" onClick={event=>navigate(event,'rewards')}>View my rewards<Gift size={16}/></a></div></div>
@@ -53,7 +57,7 @@ function LandingPage({onNavigate}:{onNavigate:(page:Page)=>void}) {
 
 function App() {
   const [page,setPage] = useState<Page>(()=>pageFromPath(location.pathname));
-  const inApp=page!=='guide';
+  const inApp=page==='create'||page==='rewards';
   const [account,setAccount] = useState('');
   const [notice,setNotice] = useState('');
   const [busy,setBusy] = useState(false);
@@ -75,6 +79,7 @@ function App() {
   const [review,setReview] = useState(false);
   const [success,setSuccess] = useState<string[]>([]);
   const [latestPayout,setLatestPayout] = useState<Payout|null>(null);
+  const [claims,setClaims] = useState<Claim[]>([]);
   const [nfts,setNfts] = useState<(NFT & { reward: Reward })[]>([]);
   const [loading,setLoading] = useState(false);
   const [hasAccess,setHasAccess] = useState<boolean|null>(null);
@@ -91,15 +96,23 @@ function App() {
     window.addEventListener('popstate',syncPage);
     return ()=>window.removeEventListener('popstate',syncPage);
   },[]);
-  useEffect(()=>{ document.title = `${page==='guide'?'How it works':page==='create'?'Create airdrop':'My rewards'} | Keydrop`; },[page]);
+  useEffect(()=>{ document.title = `${page==='guide'?'How it works':page==='doc'?'Documentation':page==='create'?'Create airdrop':'My rewards'} | Keydrop`; },[page]);
   useEffect(()=>{
     if(!notice)return;
     const timer=window.setTimeout(()=>setNotice(''),10000);
     return ()=>window.clearTimeout(timer);
   },[notice]);
   useEffect(()=>{
-    if(!account){setLatestPayout(null);return;}
-    try {const saved=localStorage.getItem(`keydrop:payout:${contractId}:${account}`);setLatestPayout(saved?JSON.parse(saved):null);} catch {setLatestPayout(null);}
+    if(!account){setLatestPayout(null);setClaims([]);return;}
+    try {
+      const saved=localStorage.getItem(`keydrop:payout:${contractId}:${account}`);
+      const latest: Payout|null=saved?JSON.parse(saved):null;
+      setLatestPayout(latest);
+      const key=claimHistoryKey(contractId,account);
+      let history=readClaimHistory(localStorage,key) as Claim[];
+      if(latest && !history.some(entry=>entry.txHash===latest.txHash)) history=rememberClaim(localStorage,key,latest,'',0) as Claim[];
+      setClaims(history);
+    } catch {setLatestPayout(null);setClaims([]);}
   },[account]);
   useEffect(() => {
     if (!contractId || !inApp) return;
@@ -127,7 +140,7 @@ function App() {
       setBusy(true);
       verifyTransactions(hashes.split(','),account).then(outcomes=>{
         const payout=outcomes.map(outcome=>confirmedPayout(outcome,outcome?.transaction?.receiver_id)).find(Boolean);
-        if(payout){rememberPayout(payout);setNotice(payoutNotice(payout,account));}
+        if(payout){rememberPayout(payout,outcomes.find(outcome=>outcome?.transaction?.hash===payout.txHash)?.transaction?.receiver_id||'');setNotice(payoutNotice(payout,account));}
         else {
           const minted=outcomes.find(outcome=>outcome?.transaction?.receiver_id===contractId && outcome?.transaction?.actions?.some((action: {FunctionCall?: {method_name?:string}})=>action.FunctionCall?.method_name==='create_collection'));
           if(minted && pending?.account===account){try{saveMint(localStorage,mintRecordKey(contractId,account),pending.signature,'confirmed',minted.transaction.hash);sessionStorage.removeItem(pendingKey);}catch{/* storage unavailable */}}
@@ -158,9 +171,14 @@ function App() {
       setNfts(rewards);setHasAccess(groups.some(group=>group.access));
     } catch(e) {setNotice(errorText(e));} finally {setLoading(false);}
   }
-  function rememberPayout(payout:Payout) {
+  function rememberPayout(payout:Payout, rewardContractId:string) {
     setLatestPayout(payout);
-    try {localStorage.setItem(`keydrop:payout:${contractId}:${payout.senderId}`,JSON.stringify(payout));} catch { /* confirmation still appears in this tab */ }
+    const recordedAt=Date.now();
+    setClaims(current=>[{...payout,rewardContractId,recordedAt},...current.filter(entry=>entry.txHash!==payout.txHash)].slice(0,100));
+    try {
+      localStorage.setItem(`keydrop:payout:${contractId}:${payout.senderId}`,JSON.stringify(payout));
+      rememberClaim(localStorage,claimHistoryKey(contractId,payout.senderId),payout,rewardContractId,recordedAt);
+    } catch { /* confirmation still appears in this tab */ }
   }
   function validate() {
     if (!collectionName.trim() || new TextEncoder().encode(collectionName).length>120) throw new Error('Add a collection name (up to 120 bytes).');
@@ -226,7 +244,7 @@ function App() {
   }
   async function transact(method:string,args:object,receiverId=contractId) {
     setBusy(true);setNotice('');
-    try {const result=await call(method,args,'1',receiverId);if(!result){setNotice('Complete approval in your wallet. We will verify the transaction when you return.');return;}assertSuccess(result);if(method==='spend' && result.transaction?.hash){const [outcome]=await verifyTransactions([result.transaction.hash],account);const payout=confirmedPayout(outcome,receiverId);if(payout)rememberPayout(payout);setNotice(payout?payoutNotice(payout,account):'Spend confirmed. Open the transaction to inspect its payment receipt.');}else setNotice('Transaction confirmed.');await loadRewards();}
+    try {const result=await call(method,args,'1',receiverId);if(!result){setNotice('Complete approval in your wallet. We will verify the transaction when you return.');return;}assertSuccess(result);if(method==='spend' && result.transaction?.hash){const [outcome]=await verifyTransactions([result.transaction.hash],account);const payout=confirmedPayout(outcome,receiverId);if(payout)rememberPayout(payout,receiverId);setNotice(payout?payoutNotice(payout,account):'Spend confirmed. Open the transaction to inspect its payment receipt.');}else setNotice('Transaction confirmed.');await loadRewards();}
     catch(e) {setNotice(errorText(e));} finally {setBusy(false);}
   }
   async function spendReward(tokenId:string, rewardContractId:string) {
@@ -234,6 +252,10 @@ function App() {
       const rewardKey=`${rewardContractId}:${tokenId}`;
       const amt=toYocto(spendAmounts[rewardKey]||'0');
       if(amt<=0n) throw new Error('Enter a positive amount.');
+      const latest=await view<Reward|null>('get_reward',{token_id:tokenId},rewardContractId);
+      if(!latest || latest.owner_id!==account) throw new Error('You no longer hold this reward NFT. Refresh My rewards.');
+      setNfts(current=>current.map(nft=>nft.contract_id===rewardContractId && nft.token_id===tokenId?{...nft,reward:latest}:nft));
+      assertSpendable(latest,amt);
       const receiver=(payoutAccounts[rewardKey]||'').trim()||account;
       if(!validAccount(receiver)) throw new Error('Enter a valid testnet NEAR account to receive the payment.');
       if(receiver===rewardContractId) throw new Error('Choose a wallet account, not the reward contract.');
@@ -280,6 +302,7 @@ function App() {
   const mediaLoadFailed=()=>setFailedMedia(displayMedia);
 
   if(page==='guide') return <LandingPage onNavigate={changePage}/>;
+  if(page==='doc') return <DocsPage onNavigate={changePage}/>;
 
   return <div className="app-shell">
     <aside className="sidebar">
@@ -303,7 +326,8 @@ function App() {
           <div className="summary"><h3>Airdrop summary</h3><div><span>Contributors</span><b>{filled.length.toString().padStart(2,'0')}</b></div><div><span>Total rewards</span><b>{fromYocto(total)} NEAR</b></div><div><span>Collection state + storage allowance <Info size={12}/></span><b>{quote===null?"Calculating...":fromYocto(quote-total)+" NEAR"}</b></div><div className="summary-total"><span>Total to attach</span><strong>{quote===null?"...":fromYocto(quote)} <small>NEAR</small></strong></div><p>Keydrop paid for the shared code once. Your quote covers rewards and collection state; unused storage allowance is refunded. Network gas is additional.</p><button className="primary-button" disabled={busy||uploading||quote===null} onClick={()=>{try{const recipients=validate();assertNewAirdrop(recipients);setReview(true);setNotice('');}catch(e){setNotice(errorText(e));}}}>{busy?<LoaderCircle className="spin" size={17}/>:<Send size={16}/>}Review airdrop<ArrowRight size={17}/></button>{!account&&<span className="connect-hint"><Wallet size={12}/>Connect your wallet when you’re ready.</span>}</div></div></aside></div>
         {success.length>0&&<div className="success-box"><CheckCircle2 size={23}/><div><h3>Confirmed on NEAR testnet</h3><p>View the transaction to inspect minted tokens and recipients.</p>{success.map(hash=><a key={hash} href={`https://testnet.nearblocks.io/txns/${hash}`} target="_blank" rel="noreferrer">View transaction<ExternalLink size={14}/></a>)}</div></div>}
       </>}
-      {page==='rewards'&&<><div className="page-heading workspace-heading"><div><h1>My rewards</h1><p>View balances, spend, and transfer reward NFTs.</p></div></div>{!account?<div className="empty-state"><Gift size={40}/><h2>Connect your wallet</h2><p>Use the NEAR account that received a reward NFT.</p><button className="primary-button" onClick={connectWallet}><Wallet size={17}/>Connect testnet wallet</button></div>:<><div className="access-strip"><ShieldCheck size={22}/><div><strong>{hasAccess===null?'Checking on-chain access…':hasAccess?'Access verified':'No contributor access'}</strong><p>{account} · {nfts.length} Keydrop NFT{nfts.length===1?"":"s"}</p></div><button className="secondary-button" disabled={loading||busy} onClick={loadRewards}>{loading?<LoaderCircle className="spin" size={15}/>:<Check size={15}/>}Refresh from chain</button></div>{latestPayout&&latestPayout.senderId===account&&<div className="payout-confirmation" role="status"><div><small>Latest NFT payment</small><strong>{latestPayout.receiverId===account?"+":""}{money(latestPayout.amount)} NEAR</strong><p>{latestPayout.receiverId===account?"Received in your wallet":'Sent to '+latestPayout.receiverId} from NFT #{latestPayout.tokenId}</p></div><a href={"https://testnet.nearblocks.io/txns/"+latestPayout.txHash} target="_blank" rel="noreferrer">View on-chain payment <ExternalLink size={14}/></a></div>}{loading?<div className="empty-state"><LoaderCircle className="spin"/>Reading your rewards from testnet…</div>:nfts.length===0?<div className="empty-state"><Gift size={40}/><h2>No rewards here yet.</h2><p>When a project airdrops you a Keydrop NFT, it will appear here.</p></div>:<div className="rewards-grid">{nfts.map(nft=><section className="panel recipient-nft" key={nft.contract_id+':'+nft.token_id}>{nft.metadata?.media?<img className="recipient-art" alt={nft.metadata.title||'Reward NFT'} src={nft.metadata.media.replace('ipfs://','https://ipfs.io/ipfs/')}/>:<RewardArt small/>}<div className="nft-collection">{nft.collection_name} / TOKEN #{nft.token_id}<ShieldCheck size={14}/></div><h2>{nft.metadata?.title||'Contributor Reward'}</h2><p>{nft.metadata?.description}</p><div className="balance-grid"><div><small>Remaining balance</small><strong>{money(nft.reward.balance)} NEAR</strong></div><div><small>Available this week</small><strong>{money(nft.reward.available)} NEAR</strong></div></div><small>Weekly limit: {money(nft.reward.weekly_limit)} NEAR · Resets {new Date(Number(nft.reward.resets_at)).toLocaleString()}</small>{nft.reward.pending&&<p className="pending-note">A transaction is settling. Refresh in a moment.</p>}<label htmlFor={`spend-${nft.token_id}`}>Send NEAR from this NFT</label><div className="inline-form"><input id={`spend-${nft.token_id}`} inputMode="decimal" placeholder="Amount in NEAR" value={spendAmounts[nft.contract_id+":"+nft.token_id]||''} onChange={e=>setSpendAmounts({...spendAmounts,[nft.contract_id+":"+nft.token_id]:e.target.value})}/><button className="secondary-button" disabled={busy||nft.reward.pending} onClick={()=>void spendReward(nft.token_id,nft.contract_id)}><ArrowDownToLine size={16}/>Send</button></div><input className="payout-account" aria-label={`Payment recipient for token ${nft.token_id}`} placeholder={`Recipient account (defaults to ${account})`} value={payoutAccounts[nft.contract_id+":"+nft.token_id]||''} onChange={e=>setPayoutAccounts({...payoutAccounts,[nft.contract_id+":"+nft.token_id]:e.target.value})}/><small>Leave recipient blank to pay your connected wallet. Up to {money(nft.reward.available)} NEAR is available now; excess requests fail on-chain.</small><details><summary>Transfer reward NFT <ArrowUpRight size={14}/></summary><p>Its remaining balance, current allowance and access move to the new holder.</p><div className="inline-form"><input aria-label={`New holder for token ${nft.token_id}`} placeholder="New holder.testnet" value={destinations[nft.contract_id+":"+nft.token_id]||''} onChange={e=>setDestinations({...destinations,[nft.contract_id+":"+nft.token_id]:e.target.value})}/><button className="secondary-button" disabled={busy||nft.reward.pending} onClick={()=>{const receiver=destinations[nft.contract_id+":"+nft.token_id]?.trim();if(!receiver||!validAccount(receiver)||receiver===account){setNotice('Enter a valid different NEAR account ID.');return;}if(window.confirm(`Transfer NFT #${nft.token_id} and its ${money(nft.reward.balance)} NEAR remaining balance to ${receiver}? This cannot be undone.`))void transact('nft_transfer',{token_id:nft.token_id,receiver_id:receiver,memo:'Keydrop reward transfer'},nft.contract_id);}}>Transfer</button></div></details></section>)}</div>}</>}</>}
+      {page==='rewards'&&<><div className="page-heading workspace-heading"><div><h1>My rewards</h1><p>View balances, spend, and transfer reward NFTs.</p></div></div>{!account?<div className="empty-state"><Gift size={40}/><h2>Connect your wallet</h2><p>Use the NEAR account that received a reward NFT.</p><button className="primary-button" onClick={connectWallet}><Wallet size={17}/>Connect testnet wallet</button></div>:<><div className="access-strip"><ShieldCheck size={22}/><div><strong>{hasAccess===null?'Checking on-chain access…':hasAccess?'Access verified':'No contributor access'}</strong><p>{account} · {nfts.length} Keydrop NFT{nfts.length===1?"":"s"}</p></div><button className="secondary-button" disabled={loading||busy} onClick={loadRewards}>{loading?<LoaderCircle className="spin" size={15}/>:<Check size={15}/>}Refresh from chain</button></div>{latestPayout&&latestPayout.senderId===account&&<div className="payout-confirmation" role="status"><div><small>Latest NFT payment</small><strong>{latestPayout.receiverId===account?"+":""}{money(latestPayout.amount)} NEAR</strong><p>{latestPayout.receiverId===account?"Received in your wallet":'Sent to '+latestPayout.receiverId} from NFT #{latestPayout.tokenId}</p></div><a href={"https://testnet.nearblocks.io/txns/"+latestPayout.txHash} target="_blank" rel="noreferrer">View on-chain payment <ExternalLink size={14}/></a></div>}{loading?<div className="empty-state"><LoaderCircle className="spin"/>Reading your rewards from testnet…</div>:nfts.length===0?<div className="empty-state"><Gift size={40}/><h2>No rewards here yet.</h2><p>When a project airdrops you a Keydrop NFT, it will appear here.</p></div>:<div className="rewards-grid">{nfts.map(nft=><section className="panel recipient-nft" key={nft.contract_id+':'+nft.token_id}>{nft.metadata?.media?<img className="recipient-art" alt={nft.metadata.title||'Reward NFT'} src={nft.metadata.media.replace('ipfs://','https://ipfs.io/ipfs/')}/>:<RewardArt small/>}<div className="nft-collection">{nft.collection_name} / TOKEN #{nft.token_id}<ShieldCheck size={14}/></div><h2>{nft.metadata?.title||'Contributor Reward'}</h2><p>{nft.metadata?.description}</p><div className="balance-grid"><div><small>Remaining balance</small><strong>{money(nft.reward.balance)} NEAR</strong></div><div><small>Available this week</small><strong>{money(nft.reward.available)} NEAR</strong></div></div><small>Weekly limit: {money(nft.reward.weekly_limit)} NEAR · Resets {new Date(Number(nft.reward.resets_at)).toLocaleString()}</small>{nft.reward.pending&&<p className="pending-note">A transaction is settling. Refresh in a moment.</p>}<label htmlFor={`spend-${nft.token_id}`}>Send NEAR from this NFT</label><div className="inline-form"><input id={`spend-${nft.token_id}`} inputMode="decimal" disabled={!canSpend(nft.reward)} placeholder="Amount in NEAR" value={spendAmounts[nft.contract_id+":"+nft.token_id]||''} onChange={e=>setSpendAmounts({...spendAmounts,[nft.contract_id+":"+nft.token_id]:e.target.value})}/><button className="secondary-button" disabled={busy||!canSpend(nft.reward)} onClick={()=>void spendReward(nft.token_id,nft.contract_id)}><ArrowDownToLine size={16}/>{nft.reward.pending?"Settling":BigInt(nft.reward.balance)===0n?"Spent":canSpend(nft.reward)?"Send":"Limit reached"}</button></div><input className="payout-account" aria-label={`Payment recipient for token ${nft.token_id}`} placeholder={`Recipient account (defaults to ${account})`} value={payoutAccounts[nft.contract_id+":"+nft.token_id]||''} onChange={e=>setPayoutAccounts({...payoutAccounts,[nft.contract_id+":"+nft.token_id]:e.target.value})}/><small>Leave recipient blank to pay your connected wallet. Up to {money(nft.reward.available)} NEAR is available now; excess requests fail on-chain.</small><details><summary>Transfer reward NFT <ArrowUpRight size={14}/></summary><p>Its remaining balance, current allowance and access move to the new holder.</p><div className="inline-form"><input aria-label={`New holder for token ${nft.token_id}`} placeholder="New holder.testnet" value={destinations[nft.contract_id+":"+nft.token_id]||''} onChange={e=>setDestinations({...destinations,[nft.contract_id+":"+nft.token_id]:e.target.value})}/><button className="secondary-button" disabled={busy||nft.reward.pending} onClick={()=>{const receiver=destinations[nft.contract_id+":"+nft.token_id]?.trim();if(!receiver||!validAccount(receiver)||receiver===account){setNotice('Enter a valid different NEAR account ID.');return;}if(window.confirm(`Transfer NFT #${nft.token_id} and its ${money(nft.reward.balance)} NEAR remaining balance to ${receiver}? This cannot be undone.`))void transact('nft_transfer',{token_id:nft.token_id,receiver_id:receiver,memo:'Keydrop reward transfer'},nft.contract_id);}}>Transfer</button></div></details></section>)}</div>}</>}</>}
+      {page==='rewards'&&account&&<section className="panel claim-history"><div className="claim-history-heading"><h2>Claim history</h2><span>{claims.length} confirmed payment{claims.length===1?'':'s'}</span></div>{claims.length===0?<p className="claim-history-empty">No confirmed payments saved here yet.</p>:<div className="claim-history-list">{claims.map(claim=><div className="claim-history-row" key={claim.txHash}><div><strong>{claim.receiverId===account?'+':'−'}{money(claim.amount)} NEAR</strong><span>{claim.receiverId===account?'Received in your wallet':`Sent to ${claim.receiverId}`} · NFT #{claim.tokenId}{claim.rewardContractId?` · ${claim.rewardContractId}`:''}</span><small>{claim.recordedAt?new Date(claim.recordedAt).toLocaleString():'Previously confirmed'}</small></div><a href={`https://testnet.nearblocks.io/txns/${claim.txHash}`} target="_blank" rel="noreferrer" aria-label={`View claim transaction ${claim.txHash}`}><ExternalLink size={16}/></a></div>)}</div>}<p className="claim-history-note">This browser saves confirmed payments it sees. For older claims or other devices, <a href={`https://testnet.nearblocks.io/address/${account}`} target="_blank" rel="noreferrer">view your on-chain activity <ExternalLink size={12}/></a>.</p></section>}
       <footer className="page-footer"><span>Built at NEAR HACKATHON <span className="footer-plus">✳</span> 2026</span></footer>
     </main></div>
     {review&&<div className="modal-backdrop" onClick={()=>{if(!busy)setReview(false);}}><section className="review-modal" role="dialog" aria-modal="true" aria-labelledby="review-title" onClick={e=>e.stopPropagation()}><button className="modal-close icon-button" aria-label="Close review" disabled={busy} onClick={()=>setReview(false)}><X size={20}/></button><h2 id="review-title">Review airdrop</h2><p>Review carefully. The collection name, balances, and weekly limits cannot change after minting.</p><div className="review-facts"><div><span>Collection</span><b>{collectionName}</b></div><div><span>Reward</span><b>{title}</b></div><div><span>Weekly limit per NFT</span><b>{weekly} NEAR</b></div>{filled.map(r=><div key={r.id}><span>{r.account}</span><b>{r.amount||amount} NEAR</b></div>)}<div><span>Total attached</span><b>{quote===null?"Calculating...":fromYocto(quote)+" NEAR"}</b></div></div>{media.startsWith("data:")&&<p className="artwork-warning">Embedded artwork may be blank in external wallet galleries. Use a public image URL before minting if gallery display matters.</p>}<p className="field-help">Keydrop paid the one-time code cost. You fund rewards and collection state; unused per-token and registry storage allowances are refunded. Gas is additional.</p>{account?<button className="primary-button" disabled={busy} onClick={mint}>{busy?<LoaderCircle className="spin" size={18}/>:<Send size={17}/>}Confirm & airdrop<ArrowRight size={17}/></button>:<button className="primary-button" onClick={connectWallet}><Wallet size={18}/>Connect wallet to continue</button>}<span className="connect-hint">Your wallet will ask you to approve the transaction.</span></section></div>}

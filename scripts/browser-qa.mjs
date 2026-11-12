@@ -13,6 +13,7 @@ try {
   assert.equal(await page.locator('.sidebar').count(),0,'Landing page must not render the app sidebar');
   assert.equal(await page.getByRole('link',{name:'Create an airdrop'}).count(),1);
   assert.equal(await page.getByRole('link',{name:'View my rewards'}).count(),1);
+  assert.equal(await page.getByRole('navigation',{name:'Site navigation'}).getByRole('link',{name:'Docs'}).count(),1);
   mkdirSync('artifacts',{recursive:true});
   await page.screenshot({path:'artifacts/landing-desktop.png',fullPage:true});
   await page.setViewportSize({width:390,height:844});
@@ -20,6 +21,18 @@ try {
   assert.ok(landingWidth.scroll<=landingWidth.width,`Landing mobile overflow: ${JSON.stringify(landingWidth)}`);
   await page.screenshot({path:'artifacts/landing-mobile.png',fullPage:true});
   await page.setViewportSize({width:1440,height:1080});
+  await page.getByRole('navigation',{name:'Site navigation'}).getByRole('link',{name:'Docs'}).click();
+  assert.equal(new URL(page.url()).pathname,'/doc');
+  await page.getByRole('heading',{name:'How Keydrop works'}).waitFor();
+  assert.equal(await page.locator('.sidebar').count(),0,'Docs page must be outside the app workspace');
+  await page.screenshot({path:'artifacts/docs-desktop.png',fullPage:true});
+  await page.setViewportSize({width:390,height:844});
+  const docsWidth=await page.evaluate(()=>({scroll:document.documentElement.scrollWidth,width:innerWidth}));
+  assert.ok(docsWidth.scroll<=docsWidth.width,`Docs mobile overflow: ${JSON.stringify(docsWidth)}`);
+  await page.screenshot({path:'artifacts/docs-mobile.png',fullPage:true});
+  await page.setViewportSize({width:1440,height:1080});
+  await page.locator('.docs-header').getByRole('link',{name:'Home'}).click();
+  await page.getByRole('heading',{name:'Good work opens doors.'}).waitFor();
   await page.locator('.landing-actions').getByRole('link',{name:'Create an airdrop'}).click();
   assert.equal(new URL(page.url()).pathname,'/create');
   assert.equal(await page.locator('.sidebar').count(),1,'Workspace sidebar belongs on app routes');
@@ -118,8 +131,10 @@ try {
   await page.getByRole('heading',{name:'Create airdrop',exact:true}).waitFor();
   await page.goto(new URL('/rewards',page.url()).href);
   await page.getByRole('heading',{name:'Connect your wallet'}).waitFor();
+  await page.goto(new URL('/doc',page.url()).href);
+  await page.getByRole('heading',{name:'How Keydrop works'}).waitFor();
   assert.deepEqual(errors,[]);
-  writeFileSync('artifacts/browser-qa.json',JSON.stringify({passed:true,checks:['standalone landing page and CTAs','testnet wallet chooser','artwork upload, remove and re-upload','live preview','exact funding summary','review modal','duplicate validation','fixed notification toast','390px layout','recipient empty state','browser history and direct routes','no runtime errors']},null,2));
+  writeFileSync('artifacts/browser-qa.json',JSON.stringify({passed:true,checks:['standalone landing page and CTAs','standalone documentation route and mobile layout','testnet wallet chooser','artwork upload, remove and re-upload','live preview','exact funding summary','review modal','duplicate validation','fixed notification toast','390px layout','recipient empty state','browser history and direct routes','no runtime errors']},null,2));
   console.log('Browser QA passed. Screenshots and report: artifacts/');
 } catch(error) {
   console.error('Browser errors:',errors);
