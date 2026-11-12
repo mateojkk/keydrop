@@ -39,6 +39,14 @@ npm run dev
 
 Open the Local URL printed by Vite. You can edit and preview a campaign without a wallet. Transactions require `VITE_CONTRACT_ID` to point to this deployed contract. No fake wallet connection or simulated mint success is used.
 
+## Deploy the monorepo on Vercel
+
+Import [`mateojkk/keydrop`](https://github.com/mateojkk/keydrop) as one Vercel project. Set **Root Directory** to the repository root (`.`), **Framework Preset** to Vite, and use the committed `vercel.json` settings: `npm ci`, `npm run build`, and output directory `dist`. The Rust contract in `contract/` is a separate package in the same repository; Vercel deploys the frontend and `api/` function, not the contract WASM. The contract is already deployed on NEAR testnet.
+
+The committed `.env.production` configures the live testnet contract for the Vite build. If deploying a different contract, set `VITE_CONTRACT_ID` and `VITE_RPC_URL` in Vercel's project environment variables before rebuilding. These `VITE_` values are public in the browser bundle; never put keys or provider secrets there. For the optional serverless `GET /api/status` function, set `NEAR_CONTRACT_ID` and `NEAR_RPC_URL` only if overriding its default Mateo testnet contract and RPC endpoint. A successful status response includes the contract ID and live NFT supply; RPC failures return HTTP 503. The SPA rewrite excludes `/api/` so requests reach the function.
+
+For local frontend development, run `npm run dev` and open `http://127.0.0.1:5173`. To run Vercel's function routing locally too, link the project with Vercel CLI and run `vercel dev` from the repository root; this needs a Vercel account. The app itself reads and signs against NEAR directly and does not depend on the status function.
+
 ## Test and build the contract
 
 ```sh
