@@ -46,6 +46,8 @@ The landing page is /; the project workspace is /create; recipients use /rewards
 6. Send NEAR from the NFT to the holder or another existing account. Keydrop verifies the transfer receipt before displaying a +NEAR confirmation for a payment to the connected holder. Meteor may label the signed action as a spend call in its own activity feed.
 7. Transfer the NFT. Its remaining balance, current weekly usage, and access follow the new holder.
 
+Duplicate protection: recipient IDs must be unique within one airdrop, enforced in both the form and factory. The form also remembers the same wallet's exact campaign in this browser, blocks repeat approval for 30 minutes while a wallet transaction may be pending, and blocks it after confirmation. Changing recipient order does not bypass this check. This browser guard does not prevent a second mint from another browser or a direct factory call; that requires a future factory upgrade with a stored sender-scoped request ID.
+
 The live factory quotes **0.37032 testnet NEAR upfront** for one 0.1 NEAR reward or **0.59032 NEAR** for two 0.1 NEAR rewards. The quote includes a 0.1 NEAR state reserve, 0.12 NEAR storage allowance per NFT, and a 0.05 NEAR registry allowance. Unused storage allowances are refunded. Gas is additional. Keydrop, rather than each project, paid the shared code publication cost once.
 
 ## Build the contracts
