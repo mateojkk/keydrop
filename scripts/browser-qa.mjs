@@ -11,6 +11,8 @@ try {
   await page.getByRole('heading',{name:'Good work opens doors.'}).waitFor();
   assert.equal(new URL(page.url()).pathname,'/');
   assert.equal(await page.locator('.sidebar').count(),0,'Landing page must not render the app sidebar');
+  assert.equal(await page.getByRole('link',{name:'Create an airdrop'}).count(),1);
+  assert.equal(await page.getByRole('link',{name:'View my rewards'}).count(),1);
   mkdirSync('artifacts',{recursive:true});
   await page.screenshot({path:'artifacts/landing-desktop.png',fullPage:true});
   await page.setViewportSize({width:390,height:844});
