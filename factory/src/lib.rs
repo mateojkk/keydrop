@@ -6,8 +6,14 @@ use near_sdk::{
 use near_sdk::serde_json::json;
 use std::collections::HashSet;
 
-const CHILD_CODE: &[u8] = include_bytes!("../../contract/target/wasm32-unknown-unknown/release/keydrop.wasm");
-const CHILD_HEADROOM_BYTES: u128 = 60_000;
+// Immutable global child code, published once under this SHA-256 code hash.
+const CHILD_CODE_HASH: [u8; 32] = [
+    0xbf, 0x52, 0x1c, 0x30, 0xb4, 0xa9, 0xd4, 0x90,
+    0x9c, 0x95, 0x6e, 0x8f, 0xb4, 0xa8, 0x8b, 0xf0,
+    0xa8, 0xb9, 0x5f, 0x92, 0xa6, 0x35, 0x1e, 0xb0,
+    0x1b, 0xc6, 0xdf, 0xb2, 0x64, 0x80, 0x2d, 0x1b,
+];
+const CHILD_HEADROOM_BYTES: u128 = 10_000;
 const REGISTRY_BUDGET_BYTES: u128 = 5_000;
 const PER_TOKEN_STORAGE_BYTES: u128 = 12_000;
 
@@ -82,7 +88,7 @@ impl Factory {
         Promise::new(child_id.clone())
             .create_account()
             .transfer(NearToken::from_yoctonear(self.child_seed()))
-            .deploy_contract(CHILD_CODE.to_vec())
+            .use_global_contract(CHILD_CODE_HASH)
             .function_call("new", init_args, NearToken::from_yoctonear(child_deposit), Gas::from_tgas(140))
             .then(Self::ext(env::current_account_id()).with_static_gas(Gas::from_tgas(25))
                 .on_created(child_id, collection_name, creator_id, U128(registry_budget)))
@@ -111,12 +117,28 @@ impl Factory {
 
 impl Factory {
     fn child_seed(&self) -> u128 {
-        (CHILD_CODE.len() as u128 + CHILD_HEADROOM_BYTES) * env::storage_byte_cost().as_yoctonear()
+        (CHILD_CODE_HASH.len() as u128 + CHILD_HEADROOM_BYTES) * env::storage_byte_cost().as_yoctonear()
     }
     fn registry_budget(&self) -> u128 {
         REGISTRY_BUDGET_BYTES * env::storage_byte_cost().as_yoctonear()
     }
     fn storage_budget(&self, recipients: u8) -> u128 {
         u128::from(recipients) * PER_TOKEN_STORAGE_BYTES * env::storage_byte_cost().as_yoctonear()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use near_sdk::{test_utils::VMContextBuilder, testing_env};
+
+    #[test]
+    fn shared_code_quote_scales_with_recipients_not_wasm_size() {
+        testing_env!(VMContextBuilder::new().build());
+        let factory = Factory::new();
+        let reward = 100_000_000_000_000_000_000_000u128;
+        assert_eq!(factory.get_required(U128(reward), 1).0, 370_320_000_000_000_000_000_000);
+        assert_eq!(factory.get_required(U128(2 * reward), 2).0, 590_320_000_000_000_000_000_000);
+        assert_eq!(factory.get_required(U128(10 * reward), 10).0, 2_350_320_000_000_000_000_000_000);
     }
 }
