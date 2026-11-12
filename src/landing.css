@@ -11,7 +11,6 @@
 .landing-actions{display:flex;align-items:center;gap:11px;flex-wrap:wrap;margin-top:29px}
 .landing-actions .primary-button,.landing-actions .secondary-button{width:auto;min-height:46px;padding:12px 18px;font-size:11px}
 .landing-actions .primary-button svg:first-child,.landing-actions .primary-button svg:last-child{margin:0}
-.landing-proof{display:flex;align-items:center;gap:9px;color:#6f8360;font-size:10px;line-height:1.5;margin-top:23px}
 .landing-art{background:#f9fdf2;border:1px solid #cbd9bb;border-radius:15px;box-shadow:0 18px 48px #2d502021;padding:15px;transform:rotate(2deg)}
 .landing-art .reward-art{height:auto;aspect-ratio:400/280;border-radius:9px;overflow:hidden}
 .landing-art-top,.landing-art-bottom{display:flex;justify-content:space-between;align-items:center;gap:14px}
@@ -21,4 +20,4 @@
 .landing-section-heading{margin:0 0 20px}
 .landing-section-heading h2{font-size:25px;margin-top:9px}
 @media(max-width:900px){.landing-hero{grid-template-columns:minmax(0,1fr) minmax(190px,.8fr);gap:22px;padding:28px}.landing-copy h1{font-size:34px}.landing-copy>p{font-size:11px}.landing-art-bottom{display:block}.landing-art-bottom strong{display:block;margin-top:5px}}
-@media(max-width:700px){.landing-header{height:68px;padding:0 20px}.landing-header .brand{font-size:24px}.landing-header nav{gap:12px}.landing-header nav a{font-size:9px}.landing-content{padding:24px 20px 0}.landing-hero{grid-template-columns:1fr;padding:27px 23px;gap:28px}.landing-copy h1{font-size:36px}.landing-art{max-width:360px;margin:0 auto;width:100%;transform:rotate(1deg)}.landing-actions .primary-button,.landing-actions .secondary-button{flex:1;min-width:155px}.landing-proof{font-size:9px}.landing-section-heading h2{font-size:22px}}
+@media(max-width:700px){.landing-header{height:68px;padding:0 20px}.landing-header .brand{font-size:24px}.landing-header nav{gap:12px}.landing-header nav a{font-size:9px}.landing-content{padding:24px 20px 0}.landing-hero{grid-template-columns:1fr;padding:27px 23px;gap:28px}.landing-copy h1{font-size:36px}.landing-art{max-width:360px;margin:0 auto;width:100%;transform:rotate(1deg)}.landing-actions .primary-button,.landing-actions .secondary-button{flex:1;min-width:155px}.landing-section-heading h2{font-size:22px}}
