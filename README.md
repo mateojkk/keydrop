@@ -123,7 +123,7 @@ Import the public repository as one Vercel project with root directory . and Vit
 One submission per project; it **cannot be edited after sending**. Submissions close **14 Nov 2026, 23:59 UTC** (**15 Nov, 00:59 WAT**). Track: **NFTs That Do Something** (nfts).
 
 - Keep this GitHub repository public.
-- Record video or screenshots of a chosen collection name, two-recipient airdrop, successful spend, rejected overspend, access, and transfer.
+- Record video or screenshots using an NFT you already minted to your own account. Show its collection name, funded balance, a successful spend, the weekly-limit rejection, and the access check. One recipient is enough for this recording. For the two-recipient airdrop and transfer where access moves between accounts, use the public transactions and final on-chain reads in [VERIFICATION.md](VERIFICATION.md); you do not need to create another account or mint again just for the demo.
 - Publish a public X post saying it was built at **NEAR HACKATHON**, tag **@NEARProtocol** and **#NEARHackathon**, and attach the media.
 - Submit the public GitHub and X links at [nearhackathon.com](https://nearhackathon.com). Check both links in a signed-out browser before the single submission.
 
