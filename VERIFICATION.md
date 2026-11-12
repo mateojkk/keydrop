@@ -1,5 +1,16 @@
 # Verification status
 
+## Collection factory (current deployment)
+
+- [GitHub Actions run 43267576070](https://github.com/mateojkk/keydrop/actions/runs/43267576070) passed the frontend build and tests, native child contract tests, child WASM build, and factory WASM build. The exact CI artifacts deployed were 477,381-byte child WASM (SHA-256 `BF521C30B4A9D4909C956E8FB4A88BF0A8B95F92A6351EB01BC6DFB264802D1B`) and 801,483-byte factory WASM (SHA-256 `4FEFF3DFE2B9C79BFAF432C1E660AAF9BF64893739700E54DD172356D3724B64`).
+- [Factory deployment](https://explorer.testnet.near.org/transactions/9Nai7x9WMPhHS1nwpJmR3bo1WgLdbBG6iKM9zvDCNnku) initialized `keydrop.testnet`. Its on-chain `get_required` quoted 5.64381 NEAR for one 0.1 NEAR recipient and 5.86381 NEAR for two 0.1 NEAR recipients.
+- [First collection creation](https://explorer.testnet.near.org/transactions/GMgagv4RGQaLSJK8RVhmDjRrJvX38h3q5TJRit9JSW8Q) made `c0.keydrop.testnet`. `nft_metadata().name` returned **Builder Collective**; token 0 was minted to Alice. Its access-key list was empty.
+- [Successful spend](https://explorer.testnet.near.org/transactions/EQjzpcnwbqZBA6xQauPhyhhVFd3rmiWWQkztawLkmzJN) paid 0.02 NEAR to Alice. The token balance became 0.08 NEAR and weekly available amount 0.03 NEAR. A [0.04 NEAR request](https://explorer.testnet.near.org/transactions/5589uoUyZGLTtrQV3qVYfDZRzm2SCdiLQEPARoZwXZw4) failed because it exceeded the remaining weekly allowance.
+- [Transfer](https://explorer.testnet.near.org/transactions/HJMMMHYRaZfvsEqnR8Le7nTAFH7pnoKkGLZCU4NPRDDY) moved token 0 to Carol. Final RPC reads returned Alice access `false`, Carol access `true`, balance 0.08 NEAR, available 0.03 NEAR.
+- A second factory call created `c1.keydrop.testnet` with the distinct collection name **Open Source Thank You**. Its two tokens went directly to Alice and Bob. The factory's on-chain collection count is 2. This verifies that collection names are independent per airdrop, not a shared factory label.
+
+The v2 frontend build and four unit tests passed. Headless Brave passed `scripts/browser-qa.mjs` for the current factory frontend, including the collection-name field, wallet chooser, artwork, funding quote, review dialog, and mobile layout. Browser-wallet signing still needs a human wallet session. The factory key remains available; child accounts have no access keys.
+
 ## Source and build
 
 - Public repository: https://github.com/mateojkk/keydrop

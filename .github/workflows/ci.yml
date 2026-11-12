@@ -42,4 +42,6 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: keydrop-cargo-lock
-          path: contract/Cargo.lock
+          path: |
+            contract/Cargo.lock
+            factory/Cargo.lock

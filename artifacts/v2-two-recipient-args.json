@@ -1,0 +1,20 @@
+{
+  "collection_name": "Open Source Thank You",
+  "metadata": {
+    "title": "Contributor Reward",
+    "description": "A funded thank you for contributors.",
+    "media": "https://raw.githubusercontent.com/mateojkk/keydrop/main/public/favicon.svg",
+    "copies": 1
+  },
+  "weekly_limit": "50000000000000000000000",
+  "recipients": [
+    {
+      "account_id": "keydrop-alice-mateo.testnet",
+      "amount": "100000000000000000000000"
+    },
+    {
+      "account_id": "keydrop-bob-mateo.testnet",
+      "amount": "100000000000000000000000"
+    }
+  ]
+}

@@ -52,5 +52,5 @@ export function assertSuccess(outcome: any) {
   const failed = statuses.find(s => s && typeof s === 'object' && 'Failure' in s);
   if (failed) throw new Error(JSON.stringify(failed.Failure));
   // spend returns the resolver's boolean, not just the receipt execution status.
-  if (outcome.status?.SuccessValue && atob(outcome.status.SuccessValue) === 'false') throw new Error('Payment failed. The contract restored your balance and weekly allowance.');
+  if (outcome.status?.SuccessValue && atob(outcome.status.SuccessValue) === 'false') throw new Error('Contract operation failed. Check the transaction receipts before retrying.');
 }

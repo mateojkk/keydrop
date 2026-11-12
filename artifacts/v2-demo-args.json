@@ -1,0 +1,16 @@
+{
+  "collection_name": "Builder Collective",
+  "metadata": {
+    "title": "Launch Contributor",
+    "description": "Testnet proof of the Keydrop collection factory.",
+    "media": "https://raw.githubusercontent.com/mateojkk/keydrop/main/public/favicon.svg",
+    "copies": 1
+  },
+  "weekly_limit": "50000000000000000000000",
+  "recipients": [
+    {
+      "account_id": "keydrop-alice-mateo.testnet",
+      "amount": "100000000000000000000000"
+    }
+  ]
+}
