@@ -1,4 +1,6 @@
 .landing-shell{min-height:100vh;background:#f8f9f5}
+.page-footer{justify-content:flex-end}
+.page-footer>span:only-child{display:flex}
 .landing-header{height:80px;border-bottom:1px solid #e4e9df;background:#fcfdf9;display:flex;align-items:center;justify-content:space-between;gap:25px;padding:0 max(32px,calc((100vw - 1290px)/2));}
 .landing-header .brand{color:#223628;padding:0}
 .landing-header nav{display:flex;align-items:center;gap:28px}
