@@ -6,7 +6,7 @@ export async function checkAccounts(accountIds: string[]) {
   await Promise.all(accountIds.map(async account_id => {
     const response = await fetch(rpc,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({jsonrpc:'2.0',id:'account',method:'query',params:{request_type:'view_account',finality:'final',account_id}})});
     const data = await response.json();
-    if(data.error) throw new Error(`Could not find ${account_id} on testnet. Check the account ID before airdropping.`);
+    if(data.error) throw new Error(`Could not find ${account_id} on testnet. Check the account ID.`);
     if(!response.ok || !data.result) throw new Error('Testnet account lookup is unavailable. Try again.');
   }));
 }

@@ -41,7 +41,7 @@ try {
     return c.toDataURL('image/png').split(',')[1];
   });
   await page.locator('input[type=file][accept="image/png,image/jpeg,image/webp,image/gif"]').setInputFiles({name:'reward.png',mimeType:'image/png',buffer:Buffer.from(image,'base64')});
-  await page.getByRole('status').filter({hasText:'Artwork ready'}).waitFor();
+  await page.getByRole('status').filter({hasText:'Artwork embedded on-chain'}).waitFor();
   await page.getByRole('button',{name:'Dismiss notification'}).click();
   assert.match(await page.locator('#media').inputValue(),/^data:image\/webp;base64,/);
   await page.getByRole('textbox',{name:'Recipient 1 account'}).fill('alice.testnet');
@@ -53,6 +53,8 @@ try {
   assert.match(await dialog.innerText(),/alice.testnet/);
   assert.match(await dialog.innerText(),/bob.testnet/);
   assert.match(await dialog.innerText(),/25.24 NEAR/);
+  assert.match(await dialog.innerText(),/Keydrop Contributor Rewards/);
+  assert.match(await dialog.innerText(),/Embedded artwork may be blank/);
   await page.getByRole('button',{name:'Close review'}).click();
   // Duplicate recipients must fail before any wallet request.
   await page.getByRole('textbox',{name:'Recipient 2 account'}).fill('alice.testnet');
