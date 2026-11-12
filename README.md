@@ -39,7 +39,7 @@ npm run dev
 
 Open the Local URL printed by Vite. You can edit and preview a campaign without a wallet. Transactions require `VITE_CONTRACT_ID` to point to this deployed contract. No fake wallet connection or simulated mint success is used.
 
-The app opens on **How it works** at `/`. **Create airdrop** is `/create`, and **My rewards** is `/rewards`. Navigation updates the URL and supports direct links, refresh, and browser back/forward. The Vercel SPA rewrite in `vercel.json` serves these routes from the same frontend build.
+The site opens on a standalone **How it works** landing page at `/`, outside the wallet workspace. **Create airdrop** is `/create`, and **My rewards** is `/rewards`; only these app routes show the workspace sidebar. Navigation updates the URL and supports direct links, refresh, and browser back/forward. The Vercel SPA rewrite in `vercel.json` serves these routes from the same frontend build.
 
 ## Deploy the monorepo on Vercel
 

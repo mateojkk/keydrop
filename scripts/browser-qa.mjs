@@ -10,6 +10,7 @@ try {
   await page.goto(process.env.KEYDROP_QA_URL || 'http://127.0.0.1:5173/');
   await page.getByRole('heading',{name:'Good work opens doors.'}).waitFor();
   assert.equal(new URL(page.url()).pathname,'/');
+  assert.equal(await page.locator('.sidebar').count(),0,'Landing page must not render the app sidebar');
   mkdirSync('artifacts',{recursive:true});
   await page.screenshot({path:'artifacts/landing-desktop.png',fullPage:true});
   await page.setViewportSize({width:390,height:844});
@@ -17,8 +18,9 @@ try {
   assert.ok(landingWidth.scroll<=landingWidth.width,`Landing mobile overflow: ${JSON.stringify(landingWidth)}`);
   await page.screenshot({path:'artifacts/landing-mobile.png',fullPage:true});
   await page.setViewportSize({width:1440,height:1080});
-  await page.getByRole('button',{name:'Create an airdrop'}).click();
+  await page.locator('.landing-actions').getByRole('link',{name:'Create an airdrop'}).click();
   assert.equal(new URL(page.url()).pathname,'/create');
+  assert.equal(await page.locator('.sidebar').count(),1,'Workspace sidebar belongs on app routes');
   await page.getByRole('heading',{name:/Reward the people/}).waitFor();
   await page.locator('#title').fill('Builder Collective');
   await assert.equal(await page.locator('.nft-content h3').innerText(),'Builder Collective');
@@ -58,8 +60,9 @@ try {
   await page.getByRole('button',{name:'My rewards',exact:true}).click();
   assert.equal(new URL(page.url()).pathname,'/rewards');
   await page.getByRole('heading',{name:'Your contributions have value.'}).waitFor();
-  await page.getByRole('button',{name:'How it works'}).click();
+  await page.locator('.sidebar .brand').click();
   assert.equal(new URL(page.url()).pathname,'/');
+  assert.equal(await page.locator('.sidebar').count(),0);
   await page.getByRole('heading',{name:'Good work opens doors.'}).waitFor();
   await page.goBack();
   assert.equal(new URL(page.url()).pathname,'/rewards');
@@ -70,7 +73,7 @@ try {
   await page.goto(new URL('/rewards',page.url()).href);
   await page.getByRole('heading',{name:'Your contributions have value.'}).waitFor();
   assert.deepEqual(errors,[]);
-  writeFileSync('artifacts/browser-qa.json',JSON.stringify({passed:true,checks:['landing route and CTA','artwork upload and WebP encoding','live preview','exact funding summary','review modal','duplicate validation','390px layout','recipient empty state','browser history and direct routes','no runtime errors']},null,2));
+  writeFileSync('artifacts/browser-qa.json',JSON.stringify({passed:true,checks:['standalone landing page and CTAs','artwork upload and WebP encoding','live preview','exact funding summary','review modal','duplicate validation','390px layout','recipient empty state','browser history and direct routes','no runtime errors']},null,2));
   console.log('Browser QA passed. Screenshots and report: artifacts/');
 } catch(error) {
   console.error('Browser errors:',errors);
