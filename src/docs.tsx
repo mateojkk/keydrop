@@ -2,30 +2,327 @@ import type React from 'react';
 import { ArrowLeft, ArrowRight, ExternalLink } from 'lucide-react';
 import './docs.css';
 
-type Destination='guide'|'create'|'rewards';
-const sections=[
-  ['overview','Overview'],['create','Create an airdrop'],['claim','Spend a reward'],
-  ['ownership','Transfer and access'],['costs','Costs and safety'],['developers','For developers'],
-  ['questions','Common questions'],
+type Destination = 'guide' | 'create' | 'rewards';
+const sections = [
+  ['overview', 'Overview'],
+  ['create', 'Create an airdrop'],
+  ['claim', 'Spend a reward'],
+  ['ownership', 'Transfer and access'],
+  ['costs', 'Costs and safety'],
+  ['developers', 'For developers'],
+  ['questions', 'Common questions'],
 ] as const;
 
-export function DocsPage({onNavigate}:{onNavigate:(page:Destination)=>void}) {
-  const navigate=(event:React.MouseEvent<HTMLAnchorElement>,page:Destination)=>{
-    if(event.button!==0||event.metaKey||event.ctrlKey||event.shiftKey||event.altKey)return;
-    event.preventDefault();onNavigate(page);
+export function DocsPage({ onNavigate }: { onNavigate: (page: Destination) => void }) {
+  const navigate = (event: React.MouseEvent<HTMLAnchorElement>, page: Destination) => {
+    if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey)
+      return;
+    event.preventDefault();
+    onNavigate(page);
   };
-  return <div className="docs-shell">
-    <header className="landing-header docs-header"><a className="brand" href="/" onClick={event=>navigate(event,'guide')}><span className="brand-icon">k</span>keydrop<span className="brand-dot">®</span></a><nav aria-label="Documentation navigation"><a href="/" onClick={event=>navigate(event,'guide')}>Home</a><a href="/create" onClick={event=>navigate(event,'create')}>Create an airdrop <ArrowRight size={14}/></a></nav></header>
-    <div className="docs-layout"><aside className="docs-toc"><strong>Documentation</strong><nav aria-label="On this page">{sections.map(([id,label])=><a href={`#${id}`} key={id}>{label}</a>)}</nav><a className="docs-toc-github" href="https://github.com/mateojkk/keydrop" target="_blank" rel="noreferrer">Source on GitHub <ExternalLink size={13}/></a></aside>
-      <main className="docs-content"><div className="docs-intro"><a href="/" onClick={event=>navigate(event,'guide')}><ArrowLeft size={14}/> Back to home</a><h1>How Keydrop works</h1><p>Keydrop creates funded Contributor Reward NFTs on NEAR testnet. A project chooses the artwork, amounts, weekly limit, and recipients. The current holder controls the remaining reward and can prove access on-chain.</p></div>
-        <section id="overview"><h2>Overview</h2><p>Each airdrop creates its own NFT collection contract. It mints one NEP-171 NFT directly into each recipient’s ordinary NEAR wallet. The project sets a collection name and reward title; both are fixed once minted. Each NFT carries its own funded NEAR balance. All NFTs in the airdrop share the weekly spending limit, while their starting balances may differ.</p><div className="docs-facts"><div><strong>1–20</strong><span>recipients per airdrop</span></div><div><strong>7 days</strong><span>per spending window</span></div><div><strong>Testnet</strong><span>for the current app</span></div></div></section>
-        <section id="create"><h2>Create an airdrop</h2><ol><li><a href="/create" onClick={event=>navigate(event,'create')}>Connect a testnet wallet</a> using Meteor or MyNearWallet. Inside Meteor mobile, Connect wallet opens the in-app wallet directly.</li><li>Enter the collection name, reward title, description, and artwork. A public HTTPS or IPFS image URL works best in wallet galleries. File uploads are compressed into the NFT metadata and may appear only in Keydrop.</li><li>Set the default funded balance, the weekly spending limit, and each recipient’s NEAR account ID. Override the balance for an individual recipient if needed.</li><li>Review the total deposit quote, then approve the transaction in your wallet. The factory deploys the collection and mints directly to the recipients.</li></ol><p>The amount assigned to a recipient is spendable funding inside their NFT. It is not a sale price. Recipient account IDs must be unique within an airdrop.</p></section>
-        <section id="claim"><h2>Spend a reward</h2><ol><li>Open <a href="/rewards" onClick={event=>navigate(event,'rewards')}>My rewards</a> with the wallet that holds the NFT.</li><li>Check <strong>Remaining balance</strong> and <strong>Available this week</strong>. Enter an amount no greater than the available amount.</li><li>Leave the recipient field blank to pay your connected wallet, or enter another existing testnet account.</li><li>Approve Send in your wallet. The app verifies the payment receipt before showing a received or sent confirmation.</li></ol><p>Each NFT’s seven-day window begins at mint. Unused weekly allowance does not roll over. The remaining balance stays locked in the NFT until later windows. When the available amount reaches zero, Send is disabled; refresh the page after the displayed reset time.</p><p>Claim history in My rewards loads confirmed on-chain payments from NearBlocks and verifies their transfer receipts. Use Load older claims to see earlier activity. Recent confirmations are also saved in this browser if the explorer is unavailable.</p></section>
-        <section id="ownership"><h2>Transfer and access</h2><p>Any current holder can transfer the NFT with Keydrop or a compatible NEAR wallet. Its remaining balance and spending already used in the current week move with it. Transfer does not reset the weekly allowance. The old holder loses both the reward and collection access immediately.</p><p>Apps can call <code>has_access(account_id)</code> on the collection contract. It returns true while that account holds at least one NFT from the collection, even if its funded balance is fully spent.</p></section>
-        <section id="costs"><h2>Costs and safety</h2><p>The project funds the rewards, collection state, and storage allowance, plus network gas. Keydrop paid the shared NFT code cost once, so each project does not pay to store another full WASM copy. The form obtains its deposit quote from the factory before wallet approval; unused per-token and registry storage allowances are refunded.</p><p>The child NFT contracts have no access keys or methods to change a minted balance, weekly limit, metadata, or owner’s funds. The contract rejects spending above the weekly limit. A rejected on-chain call can still cost gas, so the app checks the latest allowance before opening the wallet and disables Send when none is available.</p><p>The form blocks the same recipient twice in one airdrop and guards against accidentally repeating an identical airdrop from the same browser. Cross-device duplicate prevention would require a request ID enforced by the factory contract.</p></section>
-        <section id="developers"><h2>For developers</h2><p>All monetary arguments are decimal yoctoNEAR strings; 1 NEAR is 10²⁴ yoctoNEAR. Use integer arithmetic. The factory is <a href="https://testnet.nearblocks.io/address/keydrop.testnet" target="_blank" rel="noreferrer"><code>keydrop.testnet</code> <ExternalLink size={12}/></a>. Each airdrop gets a child address such as <code>c1.keydrop.testnet</code>.</p><div className="docs-table-wrap"><table><thead><tr><th>Contract</th><th>Method</th><th>Use</th></tr></thead><tbody><tr><td>Factory</td><td><code>get_required</code></td><td>Quote funding and storage</td></tr><tr><td>Factory</td><td><code>create_collection</code></td><td>Deploy and mint an airdrop</td></tr><tr><td>Factory</td><td><code>list_collections</code></td><td>Discover collection contracts</td></tr><tr><td>Collection</td><td><code>nft_token</code>, <code>nft_tokens_for_owner</code></td><td>Read NEP-171/181 NFTs</td></tr><tr><td>Collection</td><td><code>get_reward</code></td><td>Read balance, allowance, reset, pending state</td></tr><tr><td>Collection</td><td><code>has_access</code></td><td>Check current ownership access</td></tr><tr><td>Collection</td><td><code>spend</code></td><td>Pay NEAR from an NFT; attach 1 yoctoNEAR</td></tr><tr><td>Collection</td><td><code>nft_transfer</code></td><td>Transfer ownership and reward</td></tr></tbody></table></div><p>See the <a href="https://github.com/mateojkk/keydrop#readme" target="_blank" rel="noreferrer">README <ExternalLink size={12}/></a> for exact build, deployment, and reproduction commands.</p></section>
-        <section id="questions"><h2>Common questions</h2><div className="docs-questions"><details><summary>Why does the wallet show a spend call instead of +NEAR?</summary><p>The wallet labels the transaction you signed. Keydrop reads the successful transfer receipt and displays the payment amount in My rewards. The wallet’s own activity wording is controlled by the wallet.</p></details><details><summary>Can I change a minted NFT’s limit, balance, or image?</summary><p>No. Those values are immutable. Create a new airdrop for different terms or artwork.</p></details><details><summary>Why is my artwork blank in a wallet gallery?</summary><p>Some galleries do not render embedded data images. Use a direct public HTTPS or IPFS image URL and confirm it loads before minting.</p></details><details><summary>When can I spend again?</summary><p>My rewards shows each NFT’s next reset time. The weekly allowance becomes available again then, subject to the remaining funded balance.</p></details></div></section>
-        <footer className="docs-footer"><a href="/" onClick={event=>navigate(event,'guide')}>Home</a><a href="/create" onClick={event=>navigate(event,'create')}>Create an airdrop <ArrowRight size={14}/></a></footer>
-      </main></div>
-  </div>;
+  return (
+    <div className="docs-shell">
+      <header className="landing-header docs-header">
+        <a className="brand" href="/" onClick={(event) => navigate(event, 'guide')}>
+          <span className="brand-icon">k</span>keydrop<span className="brand-dot">®</span>
+        </a>
+        <nav aria-label="Documentation navigation">
+          <a href="/" onClick={(event) => navigate(event, 'guide')}>
+            Home
+          </a>
+          <a href="/create" onClick={(event) => navigate(event, 'create')}>
+            Create an airdrop <ArrowRight size={14} />
+          </a>
+        </nav>
+      </header>
+      <div className="docs-layout">
+        <aside className="docs-toc">
+          <strong>Documentation</strong>
+          <nav aria-label="On this page">
+            {sections.map(([id, label]) => (
+              <a href={`#${id}`} key={id}>
+                {label}
+              </a>
+            ))}
+          </nav>
+          <a
+            className="docs-toc-github"
+            href="https://github.com/mateojkk/keydrop"
+            target="_blank"
+            rel="noreferrer"
+          >
+            Source on GitHub <ExternalLink size={13} />
+          </a>
+        </aside>
+        <main className="docs-content">
+          <div className="docs-intro">
+            <a href="/" onClick={(event) => navigate(event, 'guide')}>
+              <ArrowLeft size={14} /> Back to home
+            </a>
+            <h1>How Keydrop works</h1>
+            <p>
+              Keydrop creates funded Contributor Reward NFTs on NEAR testnet. A project chooses the
+              artwork, amounts, weekly limit, and recipients. The current holder controls the
+              remaining reward and can prove access on-chain.
+            </p>
+          </div>
+          <section id="overview">
+            <h2>Overview</h2>
+            <p>
+              Each airdrop creates its own NFT collection contract. It mints one NEP-171 NFT
+              directly into each recipient’s ordinary NEAR wallet. The project sets a collection
+              name and reward title; both are fixed once minted. Each NFT carries its own funded
+              NEAR balance. All NFTs in the airdrop share the weekly spending limit, while their
+              starting balances may differ.
+            </p>
+            <div className="docs-facts">
+              <div>
+                <strong>1–20</strong>
+                <span>recipients per airdrop</span>
+              </div>
+              <div>
+                <strong>7 days</strong>
+                <span>per spending window</span>
+              </div>
+              <div>
+                <strong>Testnet</strong>
+                <span>for the current app</span>
+              </div>
+            </div>
+          </section>
+          <section id="create">
+            <h2>Create an airdrop</h2>
+            <ol>
+              <li>
+                <a href="/create" onClick={(event) => navigate(event, 'create')}>
+                  Connect a testnet wallet
+                </a>{' '}
+                using Meteor or MyNearWallet. Inside Meteor mobile, Connect wallet opens the in-app
+                wallet directly.
+              </li>
+              <li>
+                Enter the collection name, reward title, description, and artwork. A public HTTPS or
+                IPFS image URL works best in wallet galleries. File uploads are compressed into the
+                NFT metadata and may appear only in Keydrop.
+              </li>
+              <li>
+                Set the default funded balance, the weekly spending limit, and each recipient’s NEAR
+                account ID. Override the balance for an individual recipient if needed.
+              </li>
+              <li>
+                Review the total deposit quote, then approve the transaction in your wallet. The
+                factory deploys the collection and mints directly to the recipients.
+              </li>
+            </ol>
+            <p>
+              The amount assigned to a recipient is spendable funding inside their NFT. It is not a
+              sale price. Recipient account IDs must be unique within an airdrop.
+            </p>
+          </section>
+          <section id="claim">
+            <h2>Spend a reward</h2>
+            <ol>
+              <li>
+                Open{' '}
+                <a href="/rewards" onClick={(event) => navigate(event, 'rewards')}>
+                  My rewards
+                </a>{' '}
+                with the wallet that holds the NFT.
+              </li>
+              <li>
+                Check <strong>Remaining balance</strong> and <strong>Available this week</strong>.
+                Enter an amount no greater than the available amount.
+              </li>
+              <li>
+                Leave the recipient field blank to pay your connected wallet, or enter another
+                existing testnet account.
+              </li>
+              <li>
+                Approve Send in your wallet. The app verifies the payment receipt before showing a
+                received or sent confirmation.
+              </li>
+            </ol>
+            <p>
+              Each NFT’s seven-day window begins at mint. Unused weekly allowance does not roll
+              over. The remaining balance stays locked in the NFT until later windows. When the
+              available amount reaches zero, Send is disabled; refresh the page after the displayed
+              reset time.
+            </p>
+            <p>
+              Claim history in My rewards loads confirmed on-chain payments from NearBlocks and
+              verifies their transfer receipts. Use Load older claims to see earlier activity.
+              Recent confirmations are also saved in this browser if the explorer is unavailable.
+            </p>
+          </section>
+          <section id="ownership">
+            <h2>Transfer and access</h2>
+            <p>
+              Any current holder can transfer the NFT with Keydrop or a compatible NEAR wallet. Its
+              remaining balance and spending already used in the current week move with it. Transfer
+              does not reset the weekly allowance. The old holder loses both the reward and
+              collection access immediately.
+            </p>
+            <p>
+              Apps can call <code>has_access(account_id)</code> on the collection contract. It
+              returns true while that account holds at least one NFT from the collection, even if
+              its funded balance is fully spent.
+            </p>
+          </section>
+          <section id="costs">
+            <h2>Costs and safety</h2>
+            <p>
+              The project funds the rewards, collection state, and storage allowance, plus network
+              gas. Keydrop paid the shared NFT code cost once, so each project does not pay to store
+              another full WASM copy. The form obtains its deposit quote from the factory before
+              wallet approval; unused per-token and registry storage allowances are refunded.
+            </p>
+            <p>
+              The child NFT contracts have no access keys or methods to change a minted balance,
+              weekly limit, metadata, or owner’s funds. The contract rejects spending above the
+              weekly limit. A rejected on-chain call can still cost gas, so the app checks the
+              latest allowance before opening the wallet and disables Send when none is available.
+            </p>
+            <p>
+              The form blocks the same recipient twice in one airdrop and guards against
+              accidentally repeating an identical airdrop from the same browser. Cross-device
+              duplicate prevention would require a request ID enforced by the factory contract.
+            </p>
+          </section>
+          <section id="developers">
+            <h2>For developers</h2>
+            <p>
+              All monetary arguments are decimal yoctoNEAR strings; 1 NEAR is 10²⁴ yoctoNEAR. Use
+              integer arithmetic. The factory is{' '}
+              <a
+                href="https://testnet.nearblocks.io/address/keydrop.testnet"
+                target="_blank"
+                rel="noreferrer"
+              >
+                <code>keydrop.testnet</code> <ExternalLink size={12} />
+              </a>
+              . Each airdrop gets a child address such as <code>c1.keydrop.testnet</code>.
+            </p>
+            <div className="docs-table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Contract</th>
+                    <th>Method</th>
+                    <th>Use</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>Factory</td>
+                    <td>
+                      <code>get_required</code>
+                    </td>
+                    <td>Quote funding and storage</td>
+                  </tr>
+                  <tr>
+                    <td>Factory</td>
+                    <td>
+                      <code>create_collection</code>
+                    </td>
+                    <td>Deploy and mint an airdrop</td>
+                  </tr>
+                  <tr>
+                    <td>Factory</td>
+                    <td>
+                      <code>list_collections</code>
+                    </td>
+                    <td>Discover collection contracts</td>
+                  </tr>
+                  <tr>
+                    <td>Collection</td>
+                    <td>
+                      <code>nft_token</code>, <code>nft_tokens_for_owner</code>
+                    </td>
+                    <td>Read NEP-171/181 NFTs</td>
+                  </tr>
+                  <tr>
+                    <td>Collection</td>
+                    <td>
+                      <code>get_reward</code>
+                    </td>
+                    <td>Read balance, allowance, reset, pending state</td>
+                  </tr>
+                  <tr>
+                    <td>Collection</td>
+                    <td>
+                      <code>has_access</code>
+                    </td>
+                    <td>Check current ownership access</td>
+                  </tr>
+                  <tr>
+                    <td>Collection</td>
+                    <td>
+                      <code>spend</code>
+                    </td>
+                    <td>Pay NEAR from an NFT; attach 1 yoctoNEAR</td>
+                  </tr>
+                  <tr>
+                    <td>Collection</td>
+                    <td>
+                      <code>nft_transfer</code>
+                    </td>
+                    <td>Transfer ownership and reward</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <p>
+              See the{' '}
+              <a href="https://github.com/mateojkk/keydrop#readme" target="_blank" rel="noreferrer">
+                README <ExternalLink size={12} />
+              </a>{' '}
+              for exact build, deployment, and reproduction commands.
+            </p>
+          </section>
+          <section id="questions">
+            <h2>Common questions</h2>
+            <div className="docs-questions">
+              <details>
+                <summary>Why does the wallet show a spend call instead of +NEAR?</summary>
+                <p>
+                  The wallet labels the transaction you signed. Keydrop reads the successful
+                  transfer receipt and displays the payment amount in My rewards. The wallet’s own
+                  activity wording is controlled by the wallet.
+                </p>
+              </details>
+              <details>
+                <summary>Can I change a minted NFT’s limit, balance, or image?</summary>
+                <p>
+                  No. Those values are immutable. Create a new airdrop for different terms or
+                  artwork.
+                </p>
+              </details>
+              <details>
+                <summary>Why is my artwork blank in a wallet gallery?</summary>
+                <p>
+                  Some galleries do not render embedded data images. Use a direct public HTTPS or
+                  IPFS image URL and confirm it loads before minting.
+                </p>
+              </details>
+              <details>
+                <summary>When can I spend again?</summary>
+                <p>
+                  My rewards shows each NFT’s next reset time. The weekly allowance becomes
+                  available again then, subject to the remaining funded balance.
+                </p>
+              </details>
+            </div>
+          </section>
+          <footer className="docs-footer">
+            <a href="/" onClick={(event) => navigate(event, 'guide')}>
+              Home
+            </a>
+            <a href="/create" onClick={(event) => navigate(event, 'create')}>
+              Create an airdrop <ArrowRight size={14} />
+            </a>
+          </footer>
+        </main>
+      </div>
+    </div>
+  );
 }

@@ -2,6 +2,10 @@
 
 Contributor Reward NFTs for **NEAR HACKATHON 2026**, track **NFTs That Do Something**. Projects choose a collection name, fund rewards, set an immutable weekly limit, and airdrop NFTs to ordinary NEAR testnet accounts.
 
+## Problem and NEAR's role
+
+Projects want to reward contributors with usable value, but distributing a full, liquid token reward at once can create immediate sell pressure. Keydrop lets a project fund a reward in native NEAR inside an NFT and set how much its holder may spend each week. The holder can transfer the NFT with its remaining balance and access rights. This prototype uses NEAR accounts for ordinary wallet ownership, NEP-171 for NFT transfers, and NEAR contracts to enforce the spending rule. It does not distribute a project's own token or prevent resale of the NFT.
+
 ## Architecture
 
 The factory at [keydrop.testnet](https://testnet.nearblocks.io/address/keydrop.testnet) creates one NFT contract per airdrop: c0.keydrop.testnet, c1.keydrop.testnet, and so on. Each child returns the airdropper's chosen collection name from NEP-177 nft_metadata. The reward NFT's title is separate. Wallets can group each child as its own collection.
@@ -21,18 +25,29 @@ Existing NFTs on [keydrop-mateo.testnet](https://testnet.nearblocks.io/address/k
 
 The factory's collection_count and list_collections views enumerate child contracts. The first two collections use locally deployed code; new ones use the immutable shared code. [VERIFICATION.md](VERIFICATION.md) records transactions and final states.
 
-## Run locally
+## Judge quickstart
 
-Install Node.js 22+ and npm:
+Install Node.js 22+ and npm, then run from the repository root:
 
 ~~~sh
 npm ci
 npm test
+node scripts/verify-global-code.mjs
 npm run build
+~~~
+
+Expected results: all frontend tests pass; the code check prints SHA-256 `bf521c30b4a9d4909c956e8fb4a88bf0a8b95f92a6351eb01bc6dfb264802d1b`; and the build writes `dist/index.html`. GitHub Actions runs these checks plus native Rust tests and WASM builds for both contracts.
+
+For a local browser session, copy the public testnet configuration and start Vite:
+
+~~~sh
+cp .env.example .env.local
 npm run dev
 ~~~
 
-Copy .env.example to .env.local for development. It points to the factory, the legacy contract, and a testnet RPC. PowerShell users can run npm.cmd if execution policy blocks npm.ps1. Open the Vite URL, normally http://127.0.0.1:5173.
+On PowerShell, use `Copy-Item .env.example .env.local` and `npm.cmd run dev`. The environment file points to the testnet factory, the legacy contract, and a testnet RPC. Open `http://127.0.0.1:5173/` to see the landing page, `/create` for the project form, `/rewards` for recipient balances, and `/doc` for app documentation.
+
+For a read-only live check without a wallet, open [the status endpoint](https://keydrop-one.vercel.app/api/status). Expect JSON with `ok: true`, `network: "testnet"`, `contractId: "keydrop.testnet"`, and a collection count. [VERIFICATION.md](VERIFICATION.md) links completed testnet transactions for minting, a successful spend, a rejected overspend, and a transfer with access moving to the new holder.
 
 The landing page is /; the standalone documentation page is /doc; the project workspace is /create; recipients use /rewards. Connect a testnet Meteor or MyNearWallet account. The app calls Meteor's in-app connector directly when opened inside Meteor's mobile browser; desktop Meteor uses the browser extension connector. Never put wallet keys in environment variables or the repository.
 

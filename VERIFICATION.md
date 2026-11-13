@@ -1,5 +1,7 @@
 # Verification status
 
+The current judge checks are `npm run format:check`, `npm test`, `node scripts/verify-global-code.mjs`, and `npm run build`; GitHub Actions also runs Rust tests and WASM builds for both contracts. [README.md](README.md) lists the expected results and live read-only check. The sections below preserve the transaction evidence from the deployed testnet versions.
+
 ## Lower-cost shared-code deployment (current factory)
 
 - [GitHub Actions run 43304128725](https://github.com/mateojkk/keydrop/actions/runs/43304128725) passed frontend checks, child tests/build, factory tests/build, including the new quote test. The factory source pins the SHA-256 of [keydrop-global.wasm](artifacts/keydrop-global.wasm), which is the same child code already exercised by the first two testnet collections.
@@ -17,13 +19,13 @@
 - [Transfer](https://explorer.testnet.near.org/transactions/HJMMMHYRaZfvsEqnR8Le7nTAFH7pnoKkGLZCU4NPRDDY) moved token 0 to Carol. Final RPC reads returned Alice access `false`, Carol access `true`, balance 0.08 NEAR, available 0.03 NEAR.
 - A second factory call created `c1.keydrop.testnet` with the distinct collection name **Open Source Thank You**. Its two tokens went directly to Alice and Bob. The factory's on-chain collection count is 2. This verifies that collection names are independent per airdrop, not a shared factory label.
 
-The v2 frontend build and four unit tests passed. Headless Brave passed `scripts/browser-qa.mjs` for the factory frontend, including the collection-name field, wallet chooser, artwork, funding quote, review dialog, and mobile layout. Browser-wallet signing still needs a human wallet session. The factory key remains available; child accounts have no access keys.
+The factory key remains available; child accounts have no access keys.
 
 ## Source and build
 
 - Public repository: https://github.com/mateojkk/keydrop
 - [GitHub Actions run 43122049807](https://github.com/mateojkk/keydrop/actions/runs/43122049807) passed frontend checks, Rust native contract tests, and optimized WASM build. The release WASM was deployed to testnet; SHA-256: `CFF7271AB332E51562847B07CE8FA169099D88DDFF8D4C94B6F7C45F6A32B924` (469,531 bytes).
-- Local `npm test` passed all three input/amount test groups; `npm run build` passed TypeScript and Vite. Headless Brave initialized Wallet Selector on testnet with `meteor-wallet` and `my-near-wallet`, opened the custom chooser, and confirmed that MyNearWallet opens `https://testnet.mynearwallet.com/login/` for `keydrop-mateo.testnet`.
+- Headless Brave initialized Wallet Selector on testnet with `meteor-wallet` and `my-near-wallet`, opened the custom chooser, and confirmed that MyNearWallet opens `https://testnet.mynearwallet.com/login/` for `keydrop-mateo.testnet`.
 - `scripts/browser-qa.mjs` passed desktop (1440px) and mobile (390px) flows: standalone landing page, direct `/create` and `/rewards` routes, browser back/forward, the Meteor/MyNearWallet chooser, image upload and compact WebP, live preview, exact funding total, review dialog, duplicate rejection, empty recipient state, and no uncaught runtime errors or mobile overflow. On mobile, the form appears before the preview. UI screenshots and the result are in `artifacts/`.
 
 ## Real testnet transactions

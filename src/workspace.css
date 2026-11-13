@@ -1,49 +1,285 @@
-.sidebar nav{margin-top:48px}
-.sidebar-bottom{padding-top:0}
-.main-shell main{padding-top:31px}
-.page-heading.workspace-heading{margin-bottom:22px;align-items:flex-start}
-.workspace-heading h1{font-size:26px;line-height:1.2;letter-spacing:-.7px;margin:0 0 8px}
-.workspace-heading p{font-size:11px;line-height:1.6}
-.preview-label{font-size:11px;letter-spacing:0;font-weight:600;color:#42563f}
-.wallet-dialog{width:min(440px,100%)}
-.wallet-dialog h2{margin:2px 28px 9px 0}
-.wallet-options{display:grid;gap:10px;margin:24px 0 18px}
-.wallet-options>button{display:flex;align-items:center;gap:13px;width:100%;border:1px solid #dce5d2;border-radius:9px;background:#fbfdf8;text-align:left;padding:15px;color:#47613c}
-.wallet-options>button:hover:not(:disabled){border-color:#91ae78;background:#f0f6e8}
-.wallet-options>button>span{flex:1;min-width:0}
-.wallet-options strong,.wallet-options small{display:block}
-.wallet-options strong{font-size:12px;color:#283b2e}
-.wallet-options small{margin-top:4px;font-size:9px}
-.wallet-dialog .wallet-progress{color:#5f794d}
-.wallet-dialog .wallet-help{border-top:1px solid #e2e9d9;padding-top:15px;margin-top:10px}
-.wallet-mobile-hint{font-size:11px;line-height:1.6;color:#5d715a;background:#eef5e8;border:1px solid #dbe8d3;border-radius:8px;padding:13px}
-.wallet-help a{display:inline-flex;align-items:center;gap:2px;color:#4c7545;text-decoration:underline;text-underline-offset:3px}
-.artwork-warning{background:#fff5e8;border:1px solid #ebd8b6;border-radius:7px;padding:11px;color:#785e38!important}
-.remove-artwork{display:inline-flex;align-items:center;gap:5px;margin-top:9px;padding:3px 0;color:#647c58;font-size:10px}
-.remove-artwork:hover:not(:disabled){color:#274c2f;text-decoration:underline;text-underline-offset:3px}
-.recipient-nft .payout-account{width:100%;min-width:0;margin:2px 0 8px;font-size:11px}
-.payout-confirmation{display:flex;align-items:center;justify-content:space-between;gap:18px;margin:-8px 0 22px;padding:16px 19px;border:1px solid #bfd7b1;border-radius:9px;background:#edf8e7;color:#345a31}
-.payout-confirmation small{display:block;font-size:9px;color:#69875f}
-.payout-confirmation strong{display:block;margin:3px 0;font-size:24px;line-height:1.2}
-.payout-confirmation p{font-size:10px}
-.payout-confirmation a{display:inline-flex;align-items:center;gap:5px;font-size:10px;text-decoration:underline;white-space:nowrap}
-@media(max-width:700px){.payout-confirmation{align-items:flex-start;flex-direction:column;gap:11px}.payout-confirmation strong{font-size:21px}}
-@media(max-width:700px){.sidebar nav{margin-top:0}.main-shell main{padding-top:24px}.workspace-heading h1{font-size:23px}.preview-column{grid-row:auto}}
-.media-error{display:block;color:#a33f32;font-weight:600;margin-top:5px}
-.notice{position:fixed;top:18px;right:18px;z-index:150;width:min(420px,calc(100vw - 36px));max-height:min(50vh,360px);overflow:auto;margin:0;box-shadow:0 14px 45px #10251530}
-@media(max-width:700px){.notice{top:12px;right:12px;width:calc(100vw - 24px)}}
-.claim-history{margin-top:24px}
-.claim-history-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:16px}
-.claim-history-heading h2{font-family:Manrope,sans-serif;font-size:18px;color:#30472f}
-.claim-history-heading span,.claim-history-empty{font-size:10px;color:#84947d}
-.claim-history-list{border-top:1px solid #e4e9de}
-.claim-history-row{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:14px 0;border-bottom:1px solid #e4e9de}
-.claim-history-row>div{display:grid;gap:4px;min-width:0}
-.claim-history-row strong{font-size:15px;color:#355e38}
-.claim-history-row span,.claim-history-row small{font-size:10px;color:#7c8a75;overflow-wrap:anywhere}
-.claim-history-row a{display:grid;place-items:center;width:30px;height:30px;flex:none;border:1px solid #dce7d5;border-radius:6px;color:#54764c}
-.claim-history-note{font-size:9px;color:#87947f;line-height:1.7;margin-top:15px}
-.claim-history-note a{color:#4e7546;text-decoration:underline;text-underline-offset:2px}
-.claim-history-note a svg{vertical-align:middle}
-.claim-history-error{font-size:10px;color:#a0523e;margin-top:12px}
-.claim-history-more{margin-top:14px;width:auto}
+.sidebar nav {
+  margin-top: 48px;
+}
+.sidebar-bottom {
+  padding-top: 0;
+}
+.main-shell main {
+  padding-top: 31px;
+}
+.page-heading.workspace-heading {
+  margin-bottom: 22px;
+  align-items: flex-start;
+}
+.workspace-heading h1 {
+  font-size: 26px;
+  line-height: 1.2;
+  letter-spacing: -0.7px;
+  margin: 0 0 8px;
+}
+.workspace-heading p {
+  font-size: 11px;
+  line-height: 1.6;
+}
+.preview-label {
+  font-size: 11px;
+  letter-spacing: 0;
+  font-weight: 600;
+  color: #42563f;
+}
+.wallet-dialog {
+  width: min(440px, 100%);
+}
+.wallet-dialog h2 {
+  margin: 2px 28px 9px 0;
+}
+.wallet-options {
+  display: grid;
+  gap: 10px;
+  margin: 24px 0 18px;
+}
+.wallet-options > button {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  width: 100%;
+  border: 1px solid #dce5d2;
+  border-radius: 9px;
+  background: #fbfdf8;
+  text-align: left;
+  padding: 15px;
+  color: #47613c;
+}
+.wallet-options > button:hover:not(:disabled) {
+  border-color: #91ae78;
+  background: #f0f6e8;
+}
+.wallet-options > button > span {
+  flex: 1;
+  min-width: 0;
+}
+.wallet-options strong,
+.wallet-options small {
+  display: block;
+}
+.wallet-options strong {
+  font-size: 12px;
+  color: #283b2e;
+}
+.wallet-options small {
+  margin-top: 4px;
+  font-size: 9px;
+}
+.wallet-dialog .wallet-progress {
+  color: #5f794d;
+}
+.wallet-dialog .wallet-help {
+  border-top: 1px solid #e2e9d9;
+  padding-top: 15px;
+  margin-top: 10px;
+}
+.wallet-mobile-hint {
+  font-size: 11px;
+  line-height: 1.6;
+  color: #5d715a;
+  background: #eef5e8;
+  border: 1px solid #dbe8d3;
+  border-radius: 8px;
+  padding: 13px;
+}
+.wallet-help a {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  color: #4c7545;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.artwork-warning {
+  background: #fff5e8;
+  border: 1px solid #ebd8b6;
+  border-radius: 7px;
+  padding: 11px;
+  color: #785e38 !important;
+}
+.remove-artwork {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: 9px;
+  padding: 3px 0;
+  color: #647c58;
+  font-size: 10px;
+}
+.remove-artwork:hover:not(:disabled) {
+  color: #274c2f;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.recipient-nft .payout-account {
+  width: 100%;
+  min-width: 0;
+  margin: 2px 0 8px;
+  font-size: 11px;
+}
+.payout-confirmation {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  margin: -8px 0 22px;
+  padding: 16px 19px;
+  border: 1px solid #bfd7b1;
+  border-radius: 9px;
+  background: #edf8e7;
+  color: #345a31;
+}
+.payout-confirmation small {
+  display: block;
+  font-size: 9px;
+  color: #69875f;
+}
+.payout-confirmation strong {
+  display: block;
+  margin: 3px 0;
+  font-size: 24px;
+  line-height: 1.2;
+}
+.payout-confirmation p {
+  font-size: 10px;
+}
+.payout-confirmation a {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 10px;
+  text-decoration: underline;
+  white-space: nowrap;
+}
+@media (max-width: 700px) {
+  .payout-confirmation {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 11px;
+  }
+  .payout-confirmation strong {
+    font-size: 21px;
+  }
+}
+@media (max-width: 700px) {
+  .sidebar nav {
+    margin-top: 0;
+  }
+  .main-shell main {
+    padding-top: 24px;
+  }
+  .workspace-heading h1 {
+    font-size: 23px;
+  }
+  .preview-column {
+    grid-row: auto;
+  }
+}
+.media-error {
+  display: block;
+  color: #a33f32;
+  font-weight: 600;
+  margin-top: 5px;
+}
+.notice {
+  position: fixed;
+  top: 18px;
+  right: 18px;
+  z-index: 150;
+  width: min(420px, calc(100vw - 36px));
+  max-height: min(50vh, 360px);
+  overflow: auto;
+  margin: 0;
+  box-shadow: 0 14px 45px #10251530;
+}
+@media (max-width: 700px) {
+  .notice {
+    top: 12px;
+    right: 12px;
+    width: calc(100vw - 24px);
+  }
+}
+.claim-history {
+  margin-top: 24px;
+}
+.claim-history-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+.claim-history-heading h2 {
+  font-family: Manrope, sans-serif;
+  font-size: 18px;
+  color: #30472f;
+}
+.claim-history-heading span,
+.claim-history-empty {
+  font-size: 10px;
+  color: #84947d;
+}
+.claim-history-list {
+  border-top: 1px solid #e4e9de;
+}
+.claim-history-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px 0;
+  border-bottom: 1px solid #e4e9de;
+}
+.claim-history-row > div {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+.claim-history-row strong {
+  font-size: 15px;
+  color: #355e38;
+}
+.claim-history-row span,
+.claim-history-row small {
+  font-size: 10px;
+  color: #7c8a75;
+  overflow-wrap: anywhere;
+}
+.claim-history-row a {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  flex: none;
+  border: 1px solid #dce7d5;
+  border-radius: 6px;
+  color: #54764c;
+}
+.claim-history-note {
+  font-size: 9px;
+  color: #87947f;
+  line-height: 1.7;
+  margin-top: 15px;
+}
+.claim-history-note a {
+  color: #4e7546;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.claim-history-note a svg {
+  vertical-align: middle;
+}
+.claim-history-error {
+  font-size: 10px;
+  color: #a0523e;
+  margin-top: 12px;
+}
+.claim-history-more {
+  margin-top: 14px;
+  width: auto;
+}

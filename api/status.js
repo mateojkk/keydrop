@@ -34,6 +34,11 @@ export default async function handler(request, response) {
     const collectionCount = JSON.parse(Buffer.from(result.result.result).toString('utf8'));
     return response.status(200).json({ ok: true, network: 'testnet', contractId, collectionCount });
   } catch {
-    return response.status(503).json({ ok: false, network: 'testnet', contractId, error: 'Testnet contract status unavailable' });
+    return response.status(503).json({
+      ok: false,
+      network: 'testnet',
+      contractId,
+      error: 'Testnet contract status unavailable',
+    });
   }
 }

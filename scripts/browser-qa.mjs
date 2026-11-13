@@ -2,155 +2,325 @@
 import { writeFileSync, mkdirSync } from 'node:fs';
 import assert from 'node:assert/strict';
 const { chromium } = await import(process.env.KEYDROP_PLAYWRIGHT_MODULE || 'playwright');
-const browser = await chromium.launch({executablePath: process.env.KEYDROP_BROWSER, headless:true});
-const page = await browser.newPage({viewport:{width:1440,height:1080},deviceScaleFactor:1});
-const errors=[];
-page.on('pageerror',error=>errors.push(error.message));
+const browser = await chromium.launch({
+  executablePath: process.env.KEYDROP_BROWSER,
+  headless: true,
+});
+const page = await browser.newPage({
+  viewport: { width: 1440, height: 1080 },
+  deviceScaleFactor: 1,
+});
+const errors = [];
+page.on('pageerror', (error) => errors.push(error.message));
 try {
   await page.goto(process.env.KEYDROP_QA_URL || 'http://127.0.0.1:5173/');
-  await page.getByRole('heading',{name:'Good work opens doors.'}).waitFor();
-  assert.equal(new URL(page.url()).pathname,'/');
-  assert.equal(await page.locator('.sidebar').count(),0,'Landing page must not render the app sidebar');
-  assert.equal(await page.getByRole('link',{name:'Create an airdrop'}).count(),1);
-  assert.equal(await page.getByRole('link',{name:'View my rewards'}).count(),1);
-  assert.equal(await page.getByRole('navigation',{name:'Site navigation'}).getByRole('link',{name:'Docs'}).count(),1);
-  mkdirSync('artifacts',{recursive:true});
-  await page.screenshot({path:'artifacts/landing-desktop.png',fullPage:true});
-  await page.setViewportSize({width:390,height:844});
-  const landingWidth=await page.evaluate(()=>({scroll:document.documentElement.scrollWidth,width:innerWidth}));
-  assert.ok(landingWidth.scroll<=landingWidth.width,`Landing mobile overflow: ${JSON.stringify(landingWidth)}`);
-  await page.screenshot({path:'artifacts/landing-mobile.png',fullPage:true});
-  await page.setViewportSize({width:1440,height:1080});
-  await page.getByRole('navigation',{name:'Site navigation'}).getByRole('link',{name:'Docs'}).click();
-  assert.equal(new URL(page.url()).pathname,'/doc');
-  await page.getByRole('heading',{name:'How Keydrop works'}).waitFor();
-  assert.equal(await page.locator('.sidebar').count(),0,'Docs page must be outside the app workspace');
-  await page.screenshot({path:'artifacts/docs-desktop.png',fullPage:true});
-  await page.setViewportSize({width:390,height:844});
-  const docsWidth=await page.evaluate(()=>({scroll:document.documentElement.scrollWidth,width:innerWidth}));
-  assert.ok(docsWidth.scroll<=docsWidth.width,`Docs mobile overflow: ${JSON.stringify(docsWidth)}`);
-  await page.screenshot({path:'artifacts/docs-mobile.png',fullPage:true});
-  await page.setViewportSize({width:1440,height:1080});
-  await page.locator('.docs-header').getByRole('link',{name:'Home'}).click();
-  await page.getByRole('heading',{name:'Good work opens doors.'}).waitFor();
-  await page.locator('.landing-actions').getByRole('link',{name:'Create an airdrop'}).click();
-  assert.equal(new URL(page.url()).pathname,'/create');
-  assert.equal(await page.locator('.sidebar').count(),1,'Workspace sidebar belongs on app routes');
-  await page.getByRole('heading',{name:'Create airdrop',exact:true}).waitFor();
-  await page.getByRole('button',{name:'Connect wallet',exact:true}).click();
-  const walletDialog=page.getByRole('dialog',{name:'Connect a testnet wallet'});
+  await page.getByRole('heading', { name: 'Good work opens doors.' }).waitFor();
+  assert.equal(new URL(page.url()).pathname, '/');
+  assert.equal(
+    await page.locator('.sidebar').count(),
+    0,
+    'Landing page must not render the app sidebar',
+  );
+  assert.equal(await page.getByRole('link', { name: 'Create an airdrop' }).count(), 1);
+  assert.equal(await page.getByRole('link', { name: 'View my rewards' }).count(), 1);
+  assert.equal(
+    await page
+      .getByRole('navigation', { name: 'Site navigation' })
+      .getByRole('link', { name: 'Docs' })
+      .count(),
+    1,
+  );
+  mkdirSync('artifacts', { recursive: true });
+  await page.screenshot({ path: 'artifacts/landing-desktop.png', fullPage: true });
+  await page.setViewportSize({ width: 390, height: 844 });
+  const landingWidth = await page.evaluate(() => ({
+    scroll: document.documentElement.scrollWidth,
+    width: innerWidth,
+  }));
+  assert.ok(
+    landingWidth.scroll <= landingWidth.width,
+    `Landing mobile overflow: ${JSON.stringify(landingWidth)}`,
+  );
+  await page.screenshot({ path: 'artifacts/landing-mobile.png', fullPage: true });
+  await page.setViewportSize({ width: 1440, height: 1080 });
+  await page
+    .getByRole('navigation', { name: 'Site navigation' })
+    .getByRole('link', { name: 'Docs' })
+    .click();
+  assert.equal(new URL(page.url()).pathname, '/doc');
+  await page.getByRole('heading', { name: 'How Keydrop works' }).waitFor();
+  assert.equal(
+    await page.locator('.sidebar').count(),
+    0,
+    'Docs page must be outside the app workspace',
+  );
+  await page.screenshot({ path: 'artifacts/docs-desktop.png', fullPage: true });
+  await page.setViewportSize({ width: 390, height: 844 });
+  const docsWidth = await page.evaluate(() => ({
+    scroll: document.documentElement.scrollWidth,
+    width: innerWidth,
+  }));
+  assert.ok(
+    docsWidth.scroll <= docsWidth.width,
+    `Docs mobile overflow: ${JSON.stringify(docsWidth)}`,
+  );
+  await page.screenshot({ path: 'artifacts/docs-mobile.png', fullPage: true });
+  await page.setViewportSize({ width: 1440, height: 1080 });
+  await page.locator('.docs-header').getByRole('link', { name: 'Home' }).click();
+  await page.getByRole('heading', { name: 'Good work opens doors.' }).waitFor();
+  await page.locator('.landing-actions').getByRole('link', { name: 'Create an airdrop' }).click();
+  assert.equal(new URL(page.url()).pathname, '/create');
+  assert.equal(
+    await page.locator('.sidebar').count(),
+    1,
+    'Workspace sidebar belongs on app routes',
+  );
+  await page.getByRole('heading', { name: 'Create airdrop', exact: true }).waitFor();
+  await page.getByRole('button', { name: 'Connect wallet', exact: true }).click();
+  const walletDialog = page.getByRole('dialog', { name: 'Connect a testnet wallet' });
   await walletDialog.waitFor();
-  assert.equal(await walletDialog.getByRole('button',{name:/Meteor Wallet/}).count(),1);
-  assert.equal(await walletDialog.getByRole('button',{name:/MyNearWallet/}).count(),1);
-  assert.doesNotMatch(await walletDialog.innerText(),/HERE/i);
-  await walletDialog.getByRole('button',{name:'Close wallet chooser'}).click();
-  const meteorPage=await browser.newPage({viewport:{width:390,height:844},userAgent:'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 Mobile/15E148'});
-  await meteorPage.addInitScript(()=>{
-    window.__is_running_in_meteor_wallet_app__=true;
-    window.__meteorCalls=[];
-    window.ReactNativeWebView={postMessage:data=>{
-      const message=JSON.parse(data);window.__meteorCalls.push(message.method);
-      setTimeout(()=>window.dispatchEvent(new MessageEvent('message',{data:{nonce:message.nonce,response:message.method==='sign_in'?[{accountId:'alice.testnet'}]:{}}})),0);
-    }};
+  assert.equal(await walletDialog.getByRole('button', { name: /Meteor Wallet/ }).count(), 1);
+  assert.equal(await walletDialog.getByRole('button', { name: /MyNearWallet/ }).count(), 1);
+  assert.doesNotMatch(await walletDialog.innerText(), /HERE/i);
+  await walletDialog.getByRole('button', { name: 'Close wallet chooser' }).click();
+  const meteorPage = await browser.newPage({
+    viewport: { width: 390, height: 844 },
+    userAgent:
+      'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 Mobile/15E148',
   });
-  await meteorPage.goto(new URL('/create',page.url()).href);
-  await meteorPage.locator('.topbar .wallet-button').getByText('alice.testnet').waitFor({timeout:10000}).catch(async error=>{console.error('Meteor mobile calls:',await meteorPage.evaluate(()=>window.__meteorCalls));console.error('Meteor dialog:',await meteorPage.getByRole('dialog').allInnerTexts());throw error;});
-  assert.ok((await meteorPage.evaluate(()=>window.__meteorCalls)).includes('sign_in'),'Meteor mobile bridge must receive sign-in directly');
+  await meteorPage.addInitScript(() => {
+    window.__is_running_in_meteor_wallet_app__ = true;
+    window.__meteorCalls = [];
+    window.ReactNativeWebView = {
+      postMessage: (data) => {
+        const message = JSON.parse(data);
+        window.__meteorCalls.push(message.method);
+        setTimeout(
+          () =>
+            window.dispatchEvent(
+              new MessageEvent('message', {
+                data: {
+                  nonce: message.nonce,
+                  response: message.method === 'sign_in' ? [{ accountId: 'alice.testnet' }] : {},
+                },
+              }),
+            ),
+          0,
+        );
+      },
+    };
+  });
+  await meteorPage.goto(new URL('/create', page.url()).href);
+  await meteorPage
+    .locator('.topbar .wallet-button')
+    .getByText('alice.testnet')
+    .waitFor({ timeout: 10000 })
+    .catch(async (error) => {
+      console.error('Meteor mobile calls:', await meteorPage.evaluate(() => window.__meteorCalls));
+      console.error('Meteor dialog:', await meteorPage.getByRole('dialog').allInnerTexts());
+      throw error;
+    });
+  assert.ok(
+    (await meteorPage.evaluate(() => window.__meteorCalls)).includes('sign_in'),
+    'Meteor mobile bridge must receive sign-in directly',
+  );
   await meteorPage.close();
   await page.locator('#title').fill('Builder Collective');
   await page.locator('#collection-name').fill('Builder Collective Collection');
-  await assert.equal(await page.locator('.nft-content h3').innerText(),'Builder Collective');
+  await assert.equal(await page.locator('.nft-content h3').innerText(), 'Builder Collective');
   // Upload a real image via the application, including the embedded-WebP fallback.
-  const image=await page.evaluate(()=>{
-    const c=document.createElement('canvas'); c.width=256;c.height=256;
-    const ctx=c.getContext('2d');ctx.fillStyle='#bad895';ctx.fillRect(0,0,256,256);
-    ctx.fillStyle='#2f5b38';ctx.font='bold 150px sans-serif';ctx.fillText('K',75,185);
+  const image = await page.evaluate(() => {
+    const c = document.createElement('canvas');
+    c.width = 256;
+    c.height = 256;
+    const ctx = c.getContext('2d');
+    ctx.fillStyle = '#bad895';
+    ctx.fillRect(0, 0, 256, 256);
+    ctx.fillStyle = '#2f5b38';
+    ctx.font = 'bold 150px sans-serif';
+    ctx.fillText('K', 75, 185);
     return c.toDataURL('image/png').split(',')[1];
   });
-  const artworkFile={name:'reward.png',mimeType:'image/png',buffer:Buffer.from(image,'base64')};
-  await page.route('https://example.com/keydrop-artwork.png',route=>route.fulfill({status:200,contentType:'image/png',body:artworkFile.buffer}));
+  const artworkFile = {
+    name: 'reward.png',
+    mimeType: 'image/png',
+    buffer: Buffer.from(image, 'base64'),
+  };
+  await page.route('https://example.com/keydrop-artwork.png', (route) =>
+    route.fulfill({ status: 200, contentType: 'image/png', body: artworkFile.buffer }),
+  );
   await page.locator('#media').fill('https://example.com/keydrop-artwork.png');
-  assert.ok(await page.locator('.art-container img').evaluate(async image=>{await image.decode();return image.naturalWidth;}),'Pasted artwork URL must render in preview');
-  await page.route('https://example.com/missing-artwork.png',route=>route.fulfill({status:404,body:'Not found'}));
+  assert.ok(
+    await page.locator('.art-container img').evaluate(async (image) => {
+      await image.decode();
+      return image.naturalWidth;
+    }),
+    'Pasted artwork URL must render in preview',
+  );
+  await page.route('https://example.com/missing-artwork.png', (route) =>
+    route.fulfill({ status: 404, body: 'Not found' }),
+  );
   await page.locator('#media').fill('https://example.com/missing-artwork.png');
-  await page.getByRole('alert').filter({hasText:'This image could not load'}).waitFor();
-  assert.equal(await page.locator('.art-container img').count(),0,'Failed URL must show fallback artwork');
-  await page.getByRole('textbox',{name:'Recipient 1 account'}).fill('alice.testnet');
-  await page.getByRole('textbox',{name:'Recipient 2 account'}).fill('bob.testnet');
-  await page.locator('.summary-total strong').getByText(/\d+\.\d+ NEAR/).waitFor();
-  await page.getByRole('button',{name:'Review airdrop'}).click();
-  await page.getByRole('status').filter({hasText:'This artwork URL could not be displayed'}).waitFor();
-  await page.getByRole('button',{name:'Dismiss notification'}).click();
-  const artworkInput=page.locator('input[type=file][accept="image/png,image/jpeg,image/webp,image/gif"]');
+  await page.getByRole('alert').filter({ hasText: 'This image could not load' }).waitFor();
+  assert.equal(
+    await page.locator('.art-container img').count(),
+    0,
+    'Failed URL must show fallback artwork',
+  );
+  await page.getByRole('textbox', { name: 'Recipient 1 account' }).fill('alice.testnet');
+  await page.getByRole('textbox', { name: 'Recipient 2 account' }).fill('bob.testnet');
+  await page
+    .locator('.summary-total strong')
+    .getByText(/\d+\.\d+ NEAR/)
+    .waitFor();
+  await page.getByRole('button', { name: 'Review airdrop' }).click();
+  await page
+    .getByRole('status')
+    .filter({ hasText: 'This artwork URL could not be displayed' })
+    .waitFor();
+  await page.getByRole('button', { name: 'Dismiss notification' }).click();
+  const artworkInput = page.locator(
+    'input[type=file][accept="image/png,image/jpeg,image/webp,image/gif"]',
+  );
   await artworkInput.setInputFiles(artworkFile);
-  await page.getByRole('status').filter({hasText:'Artwork embedded on-chain'}).waitFor();
-  await page.getByRole('button',{name:'Dismiss notification'}).click();
-  assert.match(await page.locator('#media').inputValue(),/^data:image\/webp;base64,/);
-  assert.match(await page.locator('.art-container img').getAttribute('src'),/^data:image\/webp;base64,/,'Preview must use the finished NFT image');
-  assert.ok(await page.locator('.art-container img').evaluate(async image=>{await image.decode();return image.naturalWidth;}),'Uploaded artwork must render in the preview');
-  await page.getByRole('button',{name:'Remove image'}).click();
-  assert.equal(await page.locator('#media').inputValue(),'');
-  assert.equal(await page.locator('.art-container img').count(),0,'Removing artwork must clear the NFT preview');
-  assert.equal(await page.getByRole('button',{name:'Remove image'}).count(),0);
+  await page.getByRole('status').filter({ hasText: 'Artwork embedded on-chain' }).waitFor();
+  await page.getByRole('button', { name: 'Dismiss notification' }).click();
+  assert.match(await page.locator('#media').inputValue(), /^data:image\/webp;base64,/);
+  assert.match(
+    await page.locator('.art-container img').getAttribute('src'),
+    /^data:image\/webp;base64,/,
+    'Preview must use the finished NFT image',
+  );
+  assert.ok(
+    await page.locator('.art-container img').evaluate(async (image) => {
+      await image.decode();
+      return image.naturalWidth;
+    }),
+    'Uploaded artwork must render in the preview',
+  );
+  await page.getByRole('button', { name: 'Remove image' }).click();
+  assert.equal(await page.locator('#media').inputValue(), '');
+  assert.equal(
+    await page.locator('.art-container img').count(),
+    0,
+    'Removing artwork must clear the NFT preview',
+  );
+  assert.equal(await page.getByRole('button', { name: 'Remove image' }).count(), 0);
   await artworkInput.setInputFiles(artworkFile);
-  await page.getByRole('status').filter({hasText:'Artwork embedded on-chain'}).waitFor();
-  await page.getByRole('button',{name:'Dismiss notification'}).click();
-  assert.match(await page.locator('#media').inputValue(),/^data:image\/webp;base64,/);
-  assert.match(await page.locator('.art-container img').getAttribute('src'),/^data:image\/webp;base64,/,'Re-upload preview must use the finished NFT image');
-  assert.ok(await page.locator('.art-container img').evaluate(async image=>{await image.decode();return image.naturalWidth;}),'Re-uploaded artwork must render in the preview');
-  await page.getByRole('textbox',{name:'Recipient 1 account'}).fill('alice.testnet');
-  await page.getByRole('textbox',{name:'Recipient 2 account'}).fill('bob.testnet');
-  await page.getByRole('textbox',{name:'Recipient 2 reward'}).fill('15');
-  await page.locator('.summary-total strong').getByText(/\d+\.\d+ NEAR/).waitFor();
-  const quotedTotal=Number.parseFloat(await page.locator('.summary-total strong').innerText());
-  assert.ok(quotedTotal>25,'Collection deployment must be included in the total');
-  assert.ok(quotedTotal<26,'Shared code should keep collection overhead below 1 NEAR');
-  await page.getByRole('button',{name:'Review airdrop'}).click();
-  const dialog=page.getByRole('dialog');await dialog.waitFor();
-  assert.match(await dialog.innerText(),/alice.testnet/);
-  assert.match(await dialog.innerText(),/bob.testnet/);
-  assert.match(await dialog.innerText(),new RegExp(quotedTotal.toString().replace('.','\\.')+' NEAR'));
-  assert.match(await dialog.innerText(),/Builder Collective Collection/);
-  assert.match(await dialog.innerText(),/Embedded artwork may be blank/);
-  await page.getByRole('button',{name:'Close review'}).click();
+  await page.getByRole('status').filter({ hasText: 'Artwork embedded on-chain' }).waitFor();
+  await page.getByRole('button', { name: 'Dismiss notification' }).click();
+  assert.match(await page.locator('#media').inputValue(), /^data:image\/webp;base64,/);
+  assert.match(
+    await page.locator('.art-container img').getAttribute('src'),
+    /^data:image\/webp;base64,/,
+    'Re-upload preview must use the finished NFT image',
+  );
+  assert.ok(
+    await page.locator('.art-container img').evaluate(async (image) => {
+      await image.decode();
+      return image.naturalWidth;
+    }),
+    'Re-uploaded artwork must render in the preview',
+  );
+  await page.getByRole('textbox', { name: 'Recipient 1 account' }).fill('alice.testnet');
+  await page.getByRole('textbox', { name: 'Recipient 2 account' }).fill('bob.testnet');
+  await page.getByRole('textbox', { name: 'Recipient 2 reward' }).fill('15');
+  await page
+    .locator('.summary-total strong')
+    .getByText(/\d+\.\d+ NEAR/)
+    .waitFor();
+  const quotedTotal = Number.parseFloat(await page.locator('.summary-total strong').innerText());
+  assert.ok(quotedTotal > 25, 'Collection deployment must be included in the total');
+  assert.ok(quotedTotal < 26, 'Shared code should keep collection overhead below 1 NEAR');
+  await page.getByRole('button', { name: 'Review airdrop' }).click();
+  const dialog = page.getByRole('dialog');
+  await dialog.waitFor();
+  assert.match(await dialog.innerText(), /alice.testnet/);
+  assert.match(await dialog.innerText(), /bob.testnet/);
+  assert.match(
+    await dialog.innerText(),
+    new RegExp(quotedTotal.toString().replace('.', '\\.') + ' NEAR'),
+  );
+  assert.match(await dialog.innerText(), /Builder Collective Collection/);
+  assert.match(await dialog.innerText(), /Embedded artwork may be blank/);
+  await page.getByRole('button', { name: 'Close review' }).click();
   // Duplicate recipients must fail before any wallet request.
-  await page.getByRole('textbox',{name:'Recipient 2 account'}).fill('alice.testnet');
-  await page.getByRole('button',{name:'Review airdrop'}).click();
-  await page.getByRole('status').filter({hasText:'Each recipient must be unique'}).waitFor();
-  await page.evaluate(()=>window.scrollTo(0,document.body.scrollHeight));
-  assert.equal(await page.getByRole('status').evaluate(node=>getComputedStyle(node).position),'fixed','Notifications must remain visible while scrolled');
-  assert.ok((await page.getByRole('status').boundingBox()).y<80,'Toast must appear near the top of the viewport');
-  await page.getByRole('textbox',{name:'Recipient 2 account'}).fill('bob.testnet');
-  await page.getByRole('button',{name:'Dismiss notification'}).click();
-  mkdirSync('artifacts',{recursive:true});
-  await page.screenshot({path:'artifacts/create-desktop.png',fullPage:true});
-  await page.setViewportSize({width:390,height:844});
-  const widths=await page.evaluate(()=>({scroll:document.documentElement.scrollWidth,width:innerWidth}));
-  assert.ok(widths.scroll<=widths.width,`Mobile overflow: ${JSON.stringify(widths)}`);
-  await page.screenshot({path:'artifacts/create-mobile.png',fullPage:true});
-  await page.getByRole('button',{name:'My rewards',exact:true}).click();
-  assert.equal(new URL(page.url()).pathname,'/rewards');
-  await page.getByRole('heading',{name:'Connect your wallet'}).waitFor();
-  assert.equal(await page.locator('.topbar').getByRole('button',{name:'Connect wallet'}).count(),0);
+  await page.getByRole('textbox', { name: 'Recipient 2 account' }).fill('alice.testnet');
+  await page.getByRole('button', { name: 'Review airdrop' }).click();
+  await page.getByRole('status').filter({ hasText: 'Each recipient must be unique' }).waitFor();
+  await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
+  assert.equal(
+    await page.getByRole('status').evaluate((node) => getComputedStyle(node).position),
+    'fixed',
+    'Notifications must remain visible while scrolled',
+  );
+  assert.ok(
+    (await page.getByRole('status').boundingBox()).y < 80,
+    'Toast must appear near the top of the viewport',
+  );
+  await page.getByRole('textbox', { name: 'Recipient 2 account' }).fill('bob.testnet');
+  await page.getByRole('button', { name: 'Dismiss notification' }).click();
+  mkdirSync('artifacts', { recursive: true });
+  await page.screenshot({ path: 'artifacts/create-desktop.png', fullPage: true });
+  await page.setViewportSize({ width: 390, height: 844 });
+  const widths = await page.evaluate(() => ({
+    scroll: document.documentElement.scrollWidth,
+    width: innerWidth,
+  }));
+  assert.ok(widths.scroll <= widths.width, `Mobile overflow: ${JSON.stringify(widths)}`);
+  await page.screenshot({ path: 'artifacts/create-mobile.png', fullPage: true });
+  await page.getByRole('button', { name: 'My rewards', exact: true }).click();
+  assert.equal(new URL(page.url()).pathname, '/rewards');
+  await page.getByRole('heading', { name: 'Connect your wallet' }).waitFor();
+  assert.equal(
+    await page.locator('.topbar').getByRole('button', { name: 'Connect wallet' }).count(),
+    0,
+  );
   await page.locator('.sidebar .brand').click();
-  assert.equal(new URL(page.url()).pathname,'/');
-  assert.equal(await page.locator('.sidebar').count(),0);
-  await page.getByRole('heading',{name:'Good work opens doors.'}).waitFor();
+  assert.equal(new URL(page.url()).pathname, '/');
+  assert.equal(await page.locator('.sidebar').count(), 0);
+  await page.getByRole('heading', { name: 'Good work opens doors.' }).waitFor();
   await page.goBack();
-  assert.equal(new URL(page.url()).pathname,'/rewards');
+  assert.equal(new URL(page.url()).pathname, '/rewards');
   await page.goForward();
-  assert.equal(new URL(page.url()).pathname,'/');
-  await page.goto(new URL('/create',page.url()).href);
-  await page.getByRole('heading',{name:'Create airdrop',exact:true}).waitFor();
-  await page.goto(new URL('/rewards',page.url()).href);
-  await page.getByRole('heading',{name:'Connect your wallet'}).waitFor();
-  await page.goto(new URL('/doc',page.url()).href);
-  await page.getByRole('heading',{name:'How Keydrop works'}).waitFor();
-  assert.deepEqual(errors,[]);
-  writeFileSync('artifacts/browser-qa.json',JSON.stringify({passed:true,checks:['standalone landing page and CTAs','standalone documentation route and mobile layout','testnet wallet chooser and Meteor in-app bridge','artwork upload, remove and re-upload','live preview','exact funding summary','review modal','duplicate validation','fixed notification toast','390px layout','recipient empty state','browser history and direct routes','no runtime errors']},null,2));
+  assert.equal(new URL(page.url()).pathname, '/');
+  await page.goto(new URL('/create', page.url()).href);
+  await page.getByRole('heading', { name: 'Create airdrop', exact: true }).waitFor();
+  await page.goto(new URL('/rewards', page.url()).href);
+  await page.getByRole('heading', { name: 'Connect your wallet' }).waitFor();
+  await page.goto(new URL('/doc', page.url()).href);
+  await page.getByRole('heading', { name: 'How Keydrop works' }).waitFor();
+  assert.deepEqual(errors, []);
+  writeFileSync(
+    'artifacts/browser-qa.json',
+    JSON.stringify(
+      {
+        passed: true,
+        checks: [
+          'standalone landing page and CTAs',
+          'standalone documentation route and mobile layout',
+          'testnet wallet chooser and Meteor in-app bridge',
+          'artwork upload, remove and re-upload',
+          'live preview',
+          'exact funding summary',
+          'review modal',
+          'duplicate validation',
+          'fixed notification toast',
+          '390px layout',
+          'recipient empty state',
+          'browser history and direct routes',
+          'no runtime errors',
+        ],
+      },
+      null,
+      2,
+    ),
+  );
   console.log('Browser QA passed. Screenshots and report: artifacts/');
-} catch(error) {
-  console.error('Browser errors:',errors);
-  console.error('Page content:',(await page.locator('body').innerText()).slice(0,1500));
+} catch (error) {
+  console.error('Browser errors:', errors);
+  console.error('Page content:', (await page.locator('body').innerText()).slice(0, 1500));
   throw error;
-} finally { await browser.close(); }
+} finally {
+  await browser.close();
+}

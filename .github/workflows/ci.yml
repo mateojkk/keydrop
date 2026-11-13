@@ -12,6 +12,7 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
+      - run: npm run format:check
       - run: npm test
       - run: node scripts/verify-global-code.mjs
       - run: npm run build
